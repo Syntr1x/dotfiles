@@ -4,9 +4,8 @@ Just my configs for hyprland, hyprpaper, waybar, rofi and wallpapers. If found, 
 But be aware:
 
 -THE SCRIPT IS WRITTEN BY CHATGPT SO BE CAREFULL 
+
 -IM A BEGINNER WITH ARCH AND GITHUB
-
-
 
 #
 PS: EVERYTHING CAN AND WILL BREAK
