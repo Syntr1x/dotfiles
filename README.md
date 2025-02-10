@@ -1,5 +1,5 @@
 # archconfig
-Just the configs for hyprland, waybar, rofi and wallpapers
+Just my configs for hyprland, hyprpaper, waybar, rofi and wallpapers
 
 THE SCRIPT IS WRITTEN BY CHATGPT SO BE CAREFULL!
 YOUVE BEEN WARNED
