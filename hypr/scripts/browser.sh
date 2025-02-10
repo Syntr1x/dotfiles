@@ -1,1 +1,1 @@
-/home/maris/apps/zen-browser.AppImage
+~/apps/zen-browser.AppImage
