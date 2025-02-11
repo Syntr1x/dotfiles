@@ -41,7 +41,7 @@ copy_configs() {
   sudo cp -r /home/$SUDO_USER/archconfig/waybar $USER_HOME/.config/
   sudo cp -r /home/$SUDO_USER/archconfig/hypr $USER_HOME/.config/
   sudo cp -r /home/$SUDO_USER/archconfig/ghostty $USER_HOME/.config/
-  
+  sudo cp -r /home/$SUDO_USER/archconfig/rofi $USER_HOME/.config/
   # Make the scripts in the hypr directory executable
   chmod +x $USER_HOME/.config/hypr/scripts/*
 
