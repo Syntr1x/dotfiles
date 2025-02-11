@@ -45,7 +45,7 @@ install_packages() {
   echo "Checking and installing required packages..."
 
   # List of required packages
-  REQUIRED_PKGS=("waybar" "rofi-wayland" "hyprland" "nano" "ghostty" "hyprpaper" "dolphin" "ark" "firefox")
+  REQUIRED_PKGS=("waybar" "rofi-wayland" "hyprland" "nano" "ghostty" "hyprpaper" "dolphin" "ark" "firefox" "fastfetch" "btop")
 
   # Loop through the list and install only if not already installed or outdated
   for pkg in "${REQUIRED_PKGS[@]}"; do
@@ -82,7 +82,7 @@ copy_configs() {
   mkdir -p $USER_HOME/.config/waybar
   sudo cp -r /home/$USER/archconfig/waybar $USER_HOME/.config/
   sudo cp -r /home/$USER/archconfig/hypr $USER_HOME/.config/
-  
+  sudo cp -r /home/$USER/archconfig/ghostty $USER_HOME/.config/
   # Ensure correct ownership of the scripts directory
   sudo chown -R $USER:$USER $USER_HOME/.config/hypr/scripts
 
