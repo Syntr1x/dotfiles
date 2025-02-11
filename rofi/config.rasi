@@ -273,6 +273,4 @@ error-message {
 
 //@theme "/usr/share/rofi/themes/arthur.rasi"
 
-//@theme "/usr/share/rofi/themes/rounded-nord-dark.rasi"
-
-@theme "/usr/share/rofi/themes/rounded-nord-dark.rasi"
+@theme "/usr/share/rofi/themes/rounded-dark-beige.rasi"
