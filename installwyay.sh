@@ -83,6 +83,7 @@ copy_configs() {
   sudo cp -r /home/$USER/archconfig/waybar $USER_HOME/.config/
   sudo cp -r /home/$USER/archconfig/hypr $USER_HOME/.config/
   sudo cp -r /home/$USER/archconfig/ghostty $USER_HOME/.config/
+  sudo cp -r /home/$USER/archconfig/rofi $USER_HOME/.config/
   # Ensure correct ownership of the scripts directory
   sudo chown -R $USER:$USER $USER_HOME/.config/hypr/scripts
 
