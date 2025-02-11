@@ -5,7 +5,7 @@
 # Function to install packages
 install_packages() {
   echo "Installing required packages..."
-  sudo pacman -S --noconfirm waybar rofi-wayland hyprland nano ghostty hyprpaper dolphin ark
+  sudo pacman -S --noconfirm waybar rofi-wayland hyprland nano ghostty hyprpaper dolphin ark btop fastfetch
 }
 
 # Function to clone the GitHub repo and copy configs
@@ -24,6 +24,7 @@ copy_configs() {
   mkdir -p $USER_HOME/.config/waybar
   sudo cp -r /home/$SUDO_USER/archconfig/waybar $USER_HOME/.config/
   sudo cp -r /home/$SUDO_USER/archconfig/hypr $USER_HOME/.config/
+  sudo cp -r /home/$SUDO_USER/archconfig/ghostty $USER_HOME/.config/
   
   # Make the scripts in the hypr directory executable
   chmod +x $USER_HOME/.config/hypr/scripts/*
