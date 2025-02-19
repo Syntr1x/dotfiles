@@ -53,8 +53,7 @@ copy_configs() {
   git clone https://github.com/Syntr1x/archconfig /home/$USER/archconfig
 
   USER_HOME="/home/$USER"
-  echo "Copying configuration files..."
-  mkdir -p $USER_HOME/.config/waybar
+  echo "Copying configuration files"
   sudo cp -r /home/$USER/archconfig/waybar $USER_HOME/.config/
   sudo cp -r /home/$USER/archconfig/hypr $USER_HOME/.config/
   sudo cp -r /home/$USER/archconfig/ghostty $USER_HOME/.config/
