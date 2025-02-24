@@ -29,22 +29,17 @@ _installYay() {
 # Function to install packages
 install_packages() {
   echo "Checking and installing required packages..."
-  REQUIRED_PKGS=("waybar" "rofi-wayland" "hyprland" "nano" "ghostty" "hyprpaper" "dolphin" "ark" "firefox" "fastfetch" "btop" "steam" "pwvucontrol")
+  REQUIRED_PKGS=("waybar" "rofi-wayland" "hyprland" "nano" "ghostty" "hyprpaper" "dolphin" "ark" "firefox" "fastfetch" "btop" "steam")
+  
+  # Install pacman packages
   for pkg in "${REQUIRED_PKGS[@]}"; do
-    if ! pacman -Q "$pkg" &> /dev/null; then
-      echo "$pkg is not installed. Installing..."
-      sudo pacman -S --noconfirm "$pkg"
-    else
-      echo "$pkg is already installed and up to date."
-    fi
+    pacman -Q "$pkg" &> /dev/null || { echo "$pkg not found. Installing..."; sudo pacman -S --noconfirm "$pkg"; }
   done
 
-  if ! yay -Q wlogout &> /dev/null; then
-    echo "wlogout is not installed. Installing..."
-    yay -S --noconfirm wlogout
-  else
-    echo "wlogout is already installed and up to date."
-  fi
+  # Install yay packages (wlogout and vesktop)
+  for pkg in "wlogout" "vesktop" "pwvucontrol"; do
+    yay -Q "$pkg" &> /dev/null || { echo "$pkg not found. Installing..."; yay -S --noconfirm "$pkg"; }
+  done
 }
 
 # Function to clone the GitHub repo and copy configs
