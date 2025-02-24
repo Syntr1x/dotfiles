@@ -29,7 +29,7 @@ _installYay() {
 # Function to install packages
 install_packages() {
   echo "Checking and installing required packages..."
-  REQUIRED_PKGS=("waybar" "rofi-wayland" "hyprland" "nano" "ghostty" "hyprpaper" "dolphin" "ark" "firefox" "fastfetch" "btop")
+  REQUIRED_PKGS=("waybar" "rofi-wayland" "hyprland" "nano" "ghostty" "hyprpaper" "dolphin" "ark" "firefox" "fastfetch" "btop" "steam" "pwvucontrol")
   for pkg in "${REQUIRED_PKGS[@]}"; do
     if ! pacman -Q "$pkg" &> /dev/null; then
       echo "$pkg is not installed. Installing..."
