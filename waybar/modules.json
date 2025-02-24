@@ -31,8 +31,6 @@
             "(.*) - Brave": "$1",
             "(.*) - Chromium": "$1",
             "(.*) - Brave Search": "$1",
-            "(.*) - Outlook": "$1",
-            "(.*) Microsoft Teams": "$1"
         },
         "separate-outputs": true
     },
@@ -42,7 +40,6 @@
         "format": "Rofi",
         "tooltip-format": "Left: Open the application launcher\nRight: Show all keybindings",
         "on-click": "rofi -show drun -replace",
-        "on-click-right": "~/.config/ml4w/scripts/keybindings.sh",
         "tooltip": false
     },
     
