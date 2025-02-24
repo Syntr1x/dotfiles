@@ -16,7 +16,7 @@ _installYay() {
 
 # Function to install pacman packages
 install_pacman_packages() {
-  REQUIRED_PKGS=("waybar" "rofi-wayland" "hyprland" "nano" "ghostty" "hyprpaper" "dolphin" "ark" "chromium" "fastfetch" "btop" "steam" "ttf-nerd-fonts-symbols")
+  REQUIRED_PKGS=("waybar" "rofi-wayland" "hyprland" "nano" "ghostty" "hyprpaper" "dolphin" "ark" "chromium" "fastfetch" "btop" "steam" "ttf-nerd-fonts-symbols" "networkmanager")
   for pkg in "${REQUIRED_PKGS[@]}"; do
     pacman -Q "$pkg" &> /dev/null || { echo "$pkg not found. Installing..."; sudo pacman -S --noconfirm "$pkg"; }
   done
@@ -38,6 +38,12 @@ copy_configs() {
   sudo cp -r /home/$USER/archconfig/Rofi-themes/*.rasi /usr/share/rofi/themes
 }
 
+# Function to enable and start NetworkManager
+enable_network_manager() {
+  echo "Enabling and starting NetworkManager..."
+  sudo systemctl enable NetworkManager.service
+  sudo systemctl start NetworkManager.service
+}
 if [ "$(id -u)" -eq 0 ]; then
   echo "Do not run as root. Use sudo when prompted."
   exit 1
