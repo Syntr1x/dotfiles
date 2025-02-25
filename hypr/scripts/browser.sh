@@ -1,1 +1,1 @@
-~/apps/zen-browser.AppImage
+chromium
