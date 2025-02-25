@@ -43,7 +43,7 @@ enable_network_manager() {
   echo "Enabling and starting NetworkManager..."
   sudo systemctl enable NetworkManager
   sudo systemctl start NetworkManager
-
+}
 # install browser via Flathub
 install_browser() {
   echo "Installing Zen Browser via Flathub..."
