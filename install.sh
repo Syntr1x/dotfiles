@@ -16,7 +16,7 @@ _installYay() {
 
 # Function to install pacman packages
 install_pacman_packages() {
-  REQUIRED_PKGS=("waybar" "rofi-wayland" "hyprland" "nano" "ghostty" "hyprpaper" "dolphin" "ark" "chromium" "fastfetch" "btop" "steam" "ttf-nerd-fonts-symbols" "ttf-font-awesome" "networkmanager")
+  REQUIRED_PKGS=("waybar" "rofi-wayland" "hyprland" "nano" "ghostty" "hyprpaper" "dolphin" "ark" "chromium" "fastfetch" "btop" "steam" "ttf-nerd-fonts-symbols" "ttf-font-awesome" "networkmanager" "flatpak")
   for pkg in "${REQUIRED_PKGS[@]}"; do
     pacman -Q "$pkg" &> /dev/null || { echo "$pkg not found. Installing..."; sudo pacman -S --noconfirm "$pkg"; }
   done
