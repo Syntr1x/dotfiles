@@ -41,8 +41,8 @@ copy_configs() {
 # Function to enable and start NetworkManager
 enable_network_manager() {
   echo "Enabling and starting NetworkManager..."
-  sudo systemctl enable NetworkManager.service
-  sudo systemctl start NetworkManager.service
+  sudo systemctl enable NetworkManager
+  sudo systemctl start NetworkManager
 }
 if [ "$(id -u)" -eq 0 ]; then
   echo "Do not run as root. Use sudo when prompted."
@@ -54,6 +54,7 @@ _installYay
 install_pacman_packages
 install_yay_packages
 copy_configs
+enable_network_manager
 
 echo "Cleaning up..."
 rm -rf /home/$USER/hyprconf.syn /home/$USER/tempconf /home/$USER/.config/install.sh /home/$USER/.config/README.md /home/$USER/.config/LICENSE
