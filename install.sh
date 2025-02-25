@@ -44,6 +44,12 @@ enable_network_manager() {
   sudo systemctl enable NetworkManager
   sudo systemctl start NetworkManager
 }
+
+# install browser via Flathub
+install_browser() {
+  echo "Installing Zen Browser via Flathub..."
+  flatpak install flathub app.zen_browser.zen
+}
 if [ "$(id -u)" -eq 0 ]; then
   echo "Do not run as root. Use sudo when prompted."
   exit 1
@@ -55,6 +61,7 @@ install_pacman_packages
 install_yay_packages
 copy_configs
 enable_network_manager
+install_browser
 
 echo "Cleaning up..."
 rm -rf /home/$USER/hyprconf.syn /home/$USER/tempconf /home/$USER/.config/install.sh /home/$USER/.config/README.md /home/$USER/.config/LICENSE
