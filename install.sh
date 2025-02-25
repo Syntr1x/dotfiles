@@ -56,6 +56,6 @@ install_yay_packages
 copy_configs
 
 echo "Cleaning up..."
-rm -rf /home/$USER/archconfig
+rm -rf /home/$USER/hyprconf.syn
 
 echo "Installation complete. Please restart your session for the changes to take effect."
