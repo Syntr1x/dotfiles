@@ -6,7 +6,7 @@
     }, 
     "custom/quicklink2": {
         "format": " ",
-        "on-click": "/home/maris/apps/zen-browser.AppImage",
+        "on-click": "flatpak run app.zen_browser.zen",
         "tooltip-format": "Open the browser"
     },
     "custom/quicklink3": {
