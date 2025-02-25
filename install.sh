@@ -32,10 +32,10 @@ install_yay_packages() {
 
 # Function to clone the GitHub repo and copy configs
 copy_configs() {
-  git clone https://github.com/Syntr1x/hyprconf.syn /home/$USER/'hyprconf.syn'
-  sudo cp -r /home/$USER/'hyprconf.syn'/* /home/$USER/.config/
+  git clone https://github.com/Syntr1x/hyprconf.syn /home/$USER/tempconf
+  sudo cp -r /home/$USER/tempconf/* /home/$USER/.config/
   sudo chown -R $USER:$USER /home/$USER/.config/hypr/scripts && sudo chattr -i /home/$USER/.config/hypr/scripts/* && chmod +x /home/$USER/.config/hypr/scripts/*
-  sudo cp -r /home/$USER/'hyprconf.syn'/Rofi-themes/*.rasi /usr/share/rofi/themes
+  sudo cp -r /home/$USER/tempconf/Rofi-themes/*.rasi /usr/share/rofi/themes
 }
 
 # Function to enable and start NetworkManager
@@ -56,6 +56,7 @@ install_yay_packages
 copy_configs
 
 echo "Cleaning up..."
-rm -rf /home/$USER/'hyprconf.syn'
+rm -rf /home/$USER/hyprconf.syn
+rm -rf /home/$USER/tempconf
 
 echo "Installation complete. Please restart your session for the changes to take effect."
