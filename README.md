@@ -9,7 +9,11 @@ But be aware:
 
 -IM A BEGINNER WITH ARCH AND GITHUB
 
-Automatic install: sh -c "$(curl -fsSL https://raw.githubusercontent.com/keyitdev/Syntr1x/master/setup.sh)"
+Automatic install:
+```sh
+sh -c "$(curl -fsSL https://raw.githubusercontent.com/keyitdev/Syntr1x/master/setup.sh)"
+```
+
 
 #
 PS: EVERYTHING CAN AND WILL BREAK
