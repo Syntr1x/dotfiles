@@ -56,7 +56,6 @@ install_yay_packages
 copy_configs
 
 echo "Cleaning up..."
-rm -rf /home/$USER/hyprconf.syn
-rm -rf /home/$USER/tempconf
+rm -rf /home/$USER/hyprconf.syn /home/$USER/tempconf /home/$USER/.config/install.sh
 
 echo "Installation complete. Please restart your session for the changes to take effect."
