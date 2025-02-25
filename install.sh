@@ -33,7 +33,7 @@ install_yay_packages() {
 # Function to clone the GitHub repo and copy configs
 copy_configs() {
   git clone https://github.com/Syntr1x/hyprconf.syn /home/$USER/hyprconf.syn
-  sudo cp -r /home/$USER/archconfig/* /home/$USER/.config/
+  sudo cp -r /home/$USER/hyprconf.syn/* /home/$USER/.config/
   sudo chown -R $USER:$USER /home/$USER/.config/hypr/scripts && sudo chattr -i /home/$USER/.config/hypr/scripts/* && chmod +x /home/$USER/.config/hypr/scripts/*
   sudo cp -r /home/$USER/hyprconf.syn/Rofi-themes/*.rasi /usr/share/rofi/themes
 }
