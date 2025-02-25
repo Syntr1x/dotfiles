@@ -61,6 +61,7 @@ install_yay_packages
 copy_configs
 enable_network_manager
 install_browser
+
 echo "Cleaning up..."
 rm -rf /home/$USER/hyprconf.syn /home/$USER/tempconf /home/$USER/.config/install.sh /home/$USER/.config/README.md /home/$USER/.config/LICENSE
 echo "Installation complete. Please restart your session for the changes to take effect."
