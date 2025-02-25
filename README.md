@@ -11,7 +11,7 @@ But be aware:
 
 Automatic install:
 ```sh
-sh -c "$(curl -fsSL https://raw.githubusercontent.com/Syntr1x/master/install.sh)"
+sh -c "$(curl -fsSL https://raw.githubusercontent.com/Syntr1x/hyprconf.syn/master/install.sh)"
 ```
 
 
