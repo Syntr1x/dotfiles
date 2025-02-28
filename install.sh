@@ -44,11 +44,15 @@ enable_network_manager() {
   sudo systemctl enable NetworkManager
   sudo systemctl start NetworkManager
 }
-
 # install browser via Flathub
 install_browser() {
   echo "Installing Zen Browser via Flathub..."
   flatpak install flathub app.zen_browser.zen
+}
+# Install the SDDM Astronaut theme
+install_sddm_astronaut_theme() {
+  echo "Installing SDDM Astronaut Theme by Keyitdev (https://github.com/Keyitdev/sddm-astronaut-theme/tree/master)..."
+  sh -c "$(curl -fsSL https://raw.githubusercontent.com/keyitdev/sddm-astronaut-theme/master/setup.sh)"
 }
 if [ "$(id -u)" -eq 0 ]; then
   echo "Do not run as root. Use sudo when prompted."
@@ -62,6 +66,7 @@ install_yay_packages
 copy_configs
 enable_network_manager
 install_browser
+install_sddm_astronaut_theme
 
 echo "Cleaning up..."
 rm -rf /home/$USER/hyprconf.syn /home/$USER/tempconf /home/$USER/.config/install.sh /home/$USER/.config/README.md /home/$USER/.config/LICENSE
