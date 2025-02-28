@@ -37,7 +37,7 @@ install_browser() {
 # Install SDDM Astronaut theme if chosen
 install_sddm_astronaut_theme() {
   read -p "Install SDDM Astronaut theme? (y/n): " choice
-  [[ "$choice" =~ ^[yY](es)?$ ]] && sh -c "$(curl -fsSL https://raw.githubusercontent.com/keyitdev/sddm-astronaut-theme/master/setup.sh)"
+  [[ "$choice" =~ ^[yY](es)?$ ]] && { sh -c "$(curl -fsSL https://raw.githubusercontent.com/keyitdev/sddm-astronaut-theme/master/setup.sh)"; sudo systemctl enable sddm --now; } || echo "Skipping SDDM Astronaut theme installation."
 }
 
 # Main script
