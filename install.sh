@@ -82,7 +82,6 @@ install_yay_packages
 copy_configs
 enable_network_manager
 install_browser
-install_sddm_astronaut_theme
 ask_install_sddm_theme
 
 echo "Cleaning up..."
