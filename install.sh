@@ -54,6 +54,22 @@ install_sddm_astronaut_theme() {
   echo "Installing SDDM Astronaut Theme by Keyitdev (https://github.com/Keyitdev/sddm-astronaut-theme/tree/master)..."
   sh -c "$(curl -fsSL https://raw.githubusercontent.com/keyitdev/sddm-astronaut-theme/master/setup.sh)"
 }
+# Ask the user if they want to install the SDDM Astronaut theme
+ask_install_sddm_theme() {
+  read -p "Do you want to install the SDDM Astronaut theme? (y/n): " choice
+  case "$choice" in
+    y|Y|yes|Yes)
+      install_sddm_astronaut_theme
+      ;;
+    n|N|no|No)
+      echo "Skipping SDDM Astronaut theme installation."
+      ;;
+    *)
+      echo "Invalid input. Skipping SDDM Astronaut theme installation."
+      ;;
+  esac
+}
+
 if [ "$(id -u)" -eq 0 ]; then
   echo "Do not run as root. Use sudo when prompted."
   exit 1
@@ -67,6 +83,7 @@ copy_configs
 enable_network_manager
 install_browser
 install_sddm_astronaut_theme
+ask_install_sddm_theme
 
 echo "Cleaning up..."
 rm -rf /home/$USER/hyprconf.syn /home/$USER/tempconf /home/$USER/.config/install.sh /home/$USER/.config/README.md /home/$USER/.config/LICENSE
