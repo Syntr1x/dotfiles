@@ -49,11 +49,6 @@ install_browser() {
   echo "Installing Zen Browser via Flathub..."
   flatpak install flathub app.zen_browser.zen
 }
-# Install the SDDM Astronaut theme
-install_sddm_astronaut_theme() {
-  echo "Installing SDDM Astronaut Theme by Keyitdev (https://github.com/Keyitdev/sddm-astronaut-theme/tree/master)..."
-  sh -c "$(curl -fsSL https://raw.githubusercontent.com/keyitdev/sddm-astronaut-theme/master/setup.sh)"
-}
 # Install SDDM Astronaut theme if chosen
 install_sddm_astronaut_theme() {
   read -p "Install SDDM Astronaut theme? (y/n): " choice
@@ -72,7 +67,7 @@ install_yay_packages
 copy_configs
 enable_network_manager
 install_browser
-ask_install_sddm_theme
+install_sddm_astronaut_theme
 
 echo "Cleaning up..."
 rm -rf /home/$USER/hyprconf.syn /home/$USER/tempconf /home/$USER/.config/install.sh /home/$USER/.config/README.md /home/$USER/.config/LICENSE
