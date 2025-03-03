@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Install yay if not already installed
-installYay() {
+install_Yay() {
   command -v yay &>/dev/null || { echo "Installing yay..."; sudo pacman -S --needed --noconfirm base-devel git && git clone https://aur.archlinux.org/yay.git /tmp/yay && cd /tmp/yay && makepkg -si --noconfirm && cd -; }
 }
 
@@ -43,7 +43,7 @@ install_sddm_astronaut_theme() {
 # Main script
 if [ "$(id -u)" -eq 0 ]; then echo "Do not run as root. Use sudo when prompted."; exit 1; fi
 chmod +x $0
-installYay
+install_Yay
 install_pacman_packages
 install_yay_packages
 copy_configs
