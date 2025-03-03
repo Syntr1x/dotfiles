@@ -44,7 +44,6 @@ install_sddm_astronaut_theme() {
 
 # Main script
 if [ "$(id -u)" -eq 0 ]; then echo "Do not run as root. Use sudo when prompted."; exit 1; fi
-chmod +x $0
 install_Yay
 install_pacman_packages
 install_yay_packages
