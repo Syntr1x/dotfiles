@@ -274,5 +274,4 @@ error-message {
 //@theme "/usr/share/rofi/themes/arthur.rasi"
 
 @theme "/usr/share/rofi/themes/rounded-beige.rasi"
-//@theme "/usr/share/rofi/themes/rounded-pink.rasi"
-//@theme "/usr/share/rofi/themes/rounded-dark.rasi"
+
