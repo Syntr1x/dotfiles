@@ -22,7 +22,7 @@ copy_configs() {
   git clone https://github.com/Syntr1x/hyprconf.syn /home/$USER/tempconf
   sudo cp -r /home/$USER/tempconf/* /home/$USER/.config/ && sudo chown -R $USER:$USER /home/$USER/.config/hypr/scripts && sudo chattr -i /home/$USER/.config/hypr/scripts/* && chmod +x /home/$USER/.config/hypr/scripts/*
   sudo cp /home/$USER/tempconf/Rofi-themes/*.rasi /usr/share/rofi/themes
-  sudo cp /home/$USER/tempconf/Ghostty-themes/syn-beige /usr/share/ghostty/themes
+  sudo cp /home/$USER/tempconf/Ghostty-themes/* /usr/share/ghostty/themes
 }
 
 # Enable NetworkManager
