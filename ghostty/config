@@ -4,6 +4,7 @@ window-decoration = false
 #><><Themes><><#
 #theme = syn-mellow
 theme = syn-beige
+#theme = Broadcast
 
 #><><Keybinds><><#
 keybind = ctrl+ö=toggle_tab_overview
