@@ -15,5 +15,3 @@ sh -c "$(curl -fsSL https://raw.githubusercontent.com/Syntr1x/hyprconf.syn/maste
 ```
 
 
-#
-PS: EVERYTHING CAN AND WILL BREAK
