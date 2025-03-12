@@ -14,11 +14,11 @@ Left their file header in the files intact, but also modified most files to suit
 
 But be aware:
 
--The script is written with the use of Chatgpt.
+- The script is written with the use of Chatgpt.
 
--Im a beginner in this sort of stuff so its not optimised or anything.
+- Im a beginner in this sort of stuff so its not optimised or anything.
 
--Tested only in a VM so the install on bare metal might brake.
+- Tested only in a VM so the install on bare metal might brake.
 
 
 If you find any obvious problems be sure to reach out!
