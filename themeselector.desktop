@@ -1,8 +1,8 @@
 [Desktop Entry]
 Name=Theme-selector
 Comment=Run my custom bash script
-Exec=/home/$USER/.config/hypr/scripts/themeselect.sh
+Exec=ghostty -e /home/$USER/.config/hypr/scripts/themeselect.sh
 Icon=utilities-terminal
-Terminal=true
+Terminal=false
 Type=Application
 Categories=Utility;
