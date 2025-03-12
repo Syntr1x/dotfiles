@@ -72,4 +72,5 @@ else
     exit 1
 fi
 
+echo "If you want more theme customization, try the Rofi-theme-selector or run the sddm script by Keyitdev again"
 echo "Theme and wallpaper have been successfully changed!"
