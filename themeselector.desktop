@@ -1,7 +1,7 @@
 [Desktop Entry]
 Name=Theme-selector
 Comment=Run my custom bash script
-Exec=/home/maris/.config/hypr/scripts/themeselect.sh
+Exec=/home/$USER/.config/hypr/scripts/themeselect.sh
 Icon=utilities-terminal
 Terminal=true
 Type=Application
