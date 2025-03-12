@@ -7,13 +7,13 @@ install_Yay() {
 
 # Install required pacman packages
 install_pacman_packages() {
-  local REQUIRED_PKGS=("waybar" "rofi-wayland" "hyprland" "nano" "ghostty" "hyprpaper" "dolphin" "ark" "fastfetch" "btop" "steam" "ttf-nerd-fonts-symbols" "ttf-font-awesome" "networkmanager" "flatpak" "phinger-cursors")
+  local REQUIRED_PKGS=("waybar" "rofi-wayland" "hyprland" "nano" "ghostty" "hyprpaper" "dolphin" "ark" "fastfetch" "btop" "steam" "ttf-nerd-fonts-symbols" "ttf-font-awesome" "networkmanager" "flatpak")
   for pkg in "${REQUIRED_PKGS[@]}"; do pacman -Q "$pkg" &>/dev/null || sudo pacman -S --noconfirm "$pkg"; done
 }
 
 # Install required yay (AUR) packages
 install_yay_packages() {
-  local AUR_PKGS=("wlogout" "vesktop" "pwvucontrol")
+  local AUR_PKGS=("wlogout" "vesktop" "pwvucontrol" "phinger-cursors")
   for pkg in "${AUR_PKGS[@]}"; do yay -Q "$pkg" &>/dev/null || yay -S --noconfirm "$pkg"; done
 }
 
