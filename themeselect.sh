@@ -71,6 +71,7 @@ else
     echo "Invalid wallpaper selection. Exiting."
     exit 1
 fi
-
+#reload Wallpaper
+/home/$USER/.config/hypr/scripts/reload-waybar.sh
 echo "If you want more theme customization, try the Rofi-theme-selector or run the sddm script by Keyitdev again"
 echo "Theme and wallpaper have been successfully changed!"
