@@ -18,7 +18,7 @@ But be aware:
 
 - Im a beginner in this sort of stuff so its not optimised or anything.
 
-- Tested only in a VM so the install on bare metal might brake.
+- Tested only in a VM so the install on bare metal might cause problems.
 
 
 If you find any obvious problems be sure to reach out!
