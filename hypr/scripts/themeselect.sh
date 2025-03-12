@@ -72,4 +72,6 @@ else
     exit 1
 fi
 
+echo "Reloading Wallpaper"
+bash "home/$USER/.config/hypr/scripts/reload-waybar.sh"
 echo "Theme and wallpaper have been successfully changed!"
