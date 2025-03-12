@@ -4,11 +4,11 @@ Just my Setup for hyprland, hyprpaper, waybar, wlogout, rofi, ghostty and wallpa
 
 Uses some files from: 
 
--ml4w (https://www.ml4w.com/)
+- ml4w (https://www.ml4w.com/)
 
--Keyitdev (https://github.com/Keyitdev/sddm-astronaut-theme/tree/master)
+- Keyitdev (https://github.com/Keyitdev/sddm-astronaut-theme/tree/master)
 
--newmanls (https://github.com/newmanls/rofi-themes-collection?tab=readme-ov-file)
+- newmanls (https://github.com/newmanls/rofi-themes-collection?tab=readme-ov-file)
 
 Left their file header in the files intact, but also modified most files to suit my taste better.
 
