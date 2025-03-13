@@ -73,5 +73,5 @@ else
 fi
 
 echo "Reloading Wallpaper"
-$HOME/.config/hypr/scripts/reload-hyprpaper.sh
+nohup $HOME/.config/hypr/scripts/reload-hyprpaper.sh
 echo "Theme and wallpaper have been successfully changed!"
