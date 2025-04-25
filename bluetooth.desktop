@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Bluetooth-connect-script
+Comment=Run custom bash script
+Exec=ghostty -e /home/$USER/.config/hypr/scripts/bluetooth.sh
+Icon=utilities-terminal
+Terminal=false
+Type=Application
+Categories=Utility;
