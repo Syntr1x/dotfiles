@@ -25,6 +25,7 @@ copy_configs() {
   sudo cp /home/$USER/tempconf/Ghostty-themes/* /usr/share/ghostty/themes
   sudo cp /home/$USER/tempconf/.bashrc /home/$USER/
   sudo cp /home/$USER/tempconf/themeselector.desktop /usr/share/applications/
+  sudo cp /home/$USER/tempconf/bluetooth.desktop /usr/share/applications/
   sudo chown -R "$USER":"$USER" ~/.config/rofi
 }
 
