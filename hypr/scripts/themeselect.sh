@@ -16,10 +16,10 @@ set_theme() {
     echo "Setting the theme to $theme..."
 
     # Comment out all theme lines first
-    sed -i 's/^theme =/#theme =/' "$theme_config_file"
+    sudo -E sed -i 's/^theme =/#theme =/' "$theme_config_file"
 
     # Uncomment the selected theme line
-    sed -i "s/^#theme = $theme/theme = $theme/" "$theme_config_file"
+    sudo -E sed -i "s/^#theme = $theme/theme = $theme/" "$theme_config_file"
 
     echo "Theme changed to $theme."
 }
@@ -30,10 +30,10 @@ uncomment_wallpaper() {
     echo "Setting wallpaper to: $wallpaper..."
 
     # Comment all relevant lines
-    sed -i -E 's/^(preload|wallpaper|splash) =/#\1 =/' "$wallpaper_config_file"
+    sudo -E sed -i -E 's/^(preload|wallpaper|splash) =/#\1 =/' "$wallpaper_config_file"
 
     # Uncomment only the selected wallpaper line
-    sed -i "/$wallpaper/s/^#//" "$wallpaper_config_file"
+    sudo -E sed -i "/$wallpaper/s/^#//" "$wallpaper_config_file"
 
     echo "Wallpaper changed to $wallpaper."
 }
@@ -49,10 +49,10 @@ set_rofi_theme() {
     fi
 
     # Remove any existing @theme lines
-    sed -i '/^\s*@theme/d' "$rofi_config_file"
+    sudo -E sed -i '/^\s*@theme/d' "$rofi_config_file"
 
-    # Add the new @theme line at the end
-    echo "@theme \"$rofi_theme\"" >> "$rofi_config_file"
+    # Add the new @theme line at the end using tee to avoid root-owned temp files
+    echo "@theme \"$rofi_theme\"" | sudo -E tee -a "$rofi_config_file" > /dev/null
 
     echo "Rofi theme changed to $rofi_theme."
 }
