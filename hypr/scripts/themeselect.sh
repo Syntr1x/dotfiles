@@ -105,6 +105,7 @@ fi
 echo "Reloading wallpaper..."
 if [[ -x "$HOME/.config/hypr/scripts/reload-hyprpaper.sh" ]]; then
     nohup "$HOME/.config/hypr/scripts/reload-hyprpaper.sh" >/dev/null 2>&1 &
+    sleep 1
 else
     echo "Warning: reload-hyprpaper.sh not found or not executable."
 fi
