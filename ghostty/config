@@ -5,6 +5,6 @@ window-decoration = false
 #theme = syn-mellow
 theme = syn-beige
 #theme = syn-Broadcast
-
+#theme = syn-Ocean
 #><><Keybinds><><#
 keybind = ctrl+ö=toggle_tab_overview
