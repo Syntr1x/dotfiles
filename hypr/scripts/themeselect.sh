@@ -5,8 +5,8 @@ theme_config_file="$HOME/.config/ghostty/config"
 wallpaper_config_file="$HOME/.config/hypr/hyprpaper.conf"
 
 # Define available themes and wallpapers
-themes=("syn-beige" "syn-Broadcast" "syn-mellow")
-wallpapers=("Flowers.png" "darkPlants.jpg" "pinkRose.jpg")
+themes=("syn-beige" "syn-Broadcast" "syn-mellow" "syn-Ocean" )
+wallpapers=("Flowers.png" "darkPlants.jpg" "pinkRose.jpg" "bluesky.jpg" )
 
 # Function to set the selected theme
 set_theme() {
