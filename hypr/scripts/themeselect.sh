@@ -6,9 +6,9 @@ wallpaper_config_file="$HOME/.config/hypr/hyprpaper.conf"
 rofi_config_file="$HOME/.config/rofi/config.rasi"
 
 # Define available options
-themes=("syn-beige" "syn-Broadcast" "syn-mellow" "syn-Ocean")
-wallpapers=("Flowers.png" "darkPlants.jpg" "pinkRose.jpg" "bluesky.jpg")
-rofi_themes=("/usr/share/rofi/themes/rounded-beige.rasi" "/usr/share/rofi/themes/rounded-dark.rasi" "/usr/share/rofi/themes/rounded-pink.rasi" "/usr/share/rofi/themes/rounded-blue.rasi")
+themes=("syn-beige" "syn-Broadcast" "syn-mellow" "syn-Ocean" "IC_Orange_PPL" )
+wallpapers=("Flowers.png" "darkPlants.jpg" "pinkRose.jpg" "bluesky.jpg" "TrainPath.png" )
+rofi_themes=("/usr/share/rofi/themes/rounded-beige.rasi" "/usr/share/rofi/themes/rounded-dark.rasi" "/usr/share/rofi/themes/rounded-pink.rasi" "/usr/share/rofi/themes/rounded-blue.rasi" "/usr/share/rofi/themes/rounded-orange.rasi" )
 
 # Function to set the selected terminal theme
 set_theme() {
