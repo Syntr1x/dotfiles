@@ -13,7 +13,7 @@ install_pacman_packages() {
 
 # Install required yay (AUR) packages
 install_yay_packages() {
-  local AUR_PKGS=("wlogout" "vesktop" "pwvucontrol" "phinger-cursors")
+  local AUR_PKGS=("wlogout" "vesktop" "pwvucontrol" "phinger-cursors" "zen-browser-bin")
   for pkg in "${AUR_PKGS[@]}"; do yay -Q "$pkg" &>/dev/null || yay -S --noconfirm "$pkg"; done
 }
 
@@ -32,11 +32,6 @@ copy_configs() {
 # Enable NetworkManager
 enable_network_manager() {
   sudo systemctl enable --now NetworkManager
-}
-
-# Install browser via Flathub
-install_browser() {
-  flatpak install -y flathub app.zen_browser.zen
 }
 
 # Install SDDM Astronaut theme if chosen
