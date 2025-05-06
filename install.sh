@@ -13,7 +13,7 @@ install_pacman_packages() {
 
 # Install required yay (AUR) packages
 install_yay_packages() {
-  local AUR_PKGS=("wlogout" "vesktop" "pwvucontrol" "phinger-cursors")
+  local AUR_PKGS=("wlogout" "vesktop" "pwvucontrol" "phinger-cursors" "zen-browser-bin")
   for pkg in "${AUR_PKGS[@]}"; do yay -Q "$pkg" &>/dev/null || yay -S --noconfirm "$pkg"; done
 }
 
@@ -28,21 +28,15 @@ copy_configs() {
   sudo cp /home/$USER/tempconf/bluetooth.desktop /usr/share/applications/
   sudo chown -R "$USER":"$USER" ~/.config/rofi
 }
-
 # Enable NetworkManager
 enable_network_manager() {
   sudo systemctl enable --now NetworkManager
-}
-# Install browser via Flathub
-install_browser() {
-  flatpak install -y flathub app.zen_browser.zen
 }
 # Install SDDM Astronaut theme if chosen
 install_sddm_astronaut_theme() {
   read -p "Install SDDM Astronaut theme? (y/n): " choice
   [[ "$choice" =~ ^[yY](es)?$ ]] && { sh -c "$(curl -fsSL https://raw.githubusercontent.com/keyitdev/sddm-astronaut-theme/master/setup.sh)"; sudo systemctl enable sddm --now; } || echo "Skipping SDDM Astronaut theme installation."
 }
-
 # Main script
 if [ "$(id -u)" -eq 0 ]; then echo "Do not run as root. Use sudo when prompted."; exit 1; fi
 install_Yay
@@ -50,7 +44,6 @@ install_pacman_packages
 install_yay_packages
 copy_configs
 enable_network_manager
-install_browser
 install_sddm_astronaut_theme
 
 # Run theme selection script 
