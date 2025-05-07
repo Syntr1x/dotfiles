@@ -25,11 +25,10 @@
         "separate-outputs": true
     },
 
-    // Rofi Application Launcher
+    // Theme Selector shortcut
     "custom/appmenu": {
-        "format": "Rofi",
-        "tooltip-format": "Left: Open the application launcher\nRight: Show all keybindings",
-        "on-click": "rofi -show drun -replace",
+        "format": "Theme",
+        "on-click": "ghostty -e /home/$USER/.config/hypr/scripts/themeselect.sh",
         "tooltip": false
     },
     
