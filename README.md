@@ -20,6 +20,7 @@ But be aware:
 
 - Tested only in a VM so the install on bare metal might cause problems.
 
+- In VM Font of some symbols are also broken without a reason that i can find...
 
 If you find any obvious problems be sure to reach out!
 
