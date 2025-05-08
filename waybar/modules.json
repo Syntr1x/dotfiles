@@ -1,3 +1,13 @@
+//  __  __           _       _            
+// |  \/  | ___   __| |_   _| | ___  ___  
+// | |\/| |/ _ \ / _` | | | | |/ _ \/ __| 
+// | |  | | (_) | (_| | |_| | |  __/\__ \ 
+// |_|  |_|\___/ \__,_|\__,_|_|\___||___/ 
+//                                        
+//  
+// by Stephan Raabe (2023) 
+// ----------------------------------------------------- 
+//
 {
     // Workspaces
     "hyprland/workspaces" : {
@@ -21,20 +31,39 @@
             "(.*) - Brave": "$1",
             "(.*) - Chromium": "$1",
             "(.*) - Brave Search": "$1",
+            "(.*) - Outlook": "$1",
+            "(.*) Microsoft Teams": "$1"
         },
         "separate-outputs": true
     },
 
-    // Theme Selector shortcut
+    // Rofi Application Launcher
     "custom/appmenu": {
         "format": "Theme",
         "on-click": "ghostty -e /home/$USER/.config/hypr/scripts/themeselect.sh",
         "tooltip": false
     },
+
+    // Media Control
+    "custom/media1": {
+        "format": " ⏮ ",
+        "on-click": "playerctl previous",
+        "tooltip": false
+    },
+    "custom/media2": {
+        "format": "  ",
+        "on-click": "playerctl play-pause",
+        "tooltip": false
+    },
+    "custom/media3": {
+        "format": " ⏭ ",
+        "on-click": "playerctl next",
+        "tooltip": false
+    },
     
     // Power Menu
     "custom/exit": {
-        "format": "󰐦",
+        "format": "",
         "tooltip-format": "Powermenu",
         "on-click": "wlogout -b 3",
         "tooltip": false
