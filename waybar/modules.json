@@ -64,7 +64,6 @@
     // Power Menu
     "custom/exit": {
         "format": " ⏻ ",
-	"icon-size": 20,
         "tooltip-format": "Powermenu",
         "on-click": "wlogout -b 3",
         "tooltip": false
