@@ -52,7 +52,6 @@
     },
     "custom/media2": {
         "format": "  ",
-        "icon-siue": 20,
         "on-click": "playerctl play-pause",
         "tooltip": false
     },
@@ -65,6 +64,7 @@
     // Power Menu
     "custom/exit": {
         "format": " ⏻ ",
+	"icon-size": 20,
         "tooltip-format": "Powermenu",
         "on-click": "wlogout -b 3",
         "tooltip": false
