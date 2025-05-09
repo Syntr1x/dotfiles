@@ -1,6 +1,6 @@
 {
     "custom/quicklink1": {
-        "format": "  ",
+        "format": "  ",
         "on-click": "ghostty",
         "tooltip-format": "Terminal"
     }, 
