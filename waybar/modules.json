@@ -52,6 +52,7 @@
     },
     "custom/media2": {
         "format": "  ",
+        "icon-siue": 20,
         "on-click": "playerctl play-pause",
         "tooltip": false
     },
