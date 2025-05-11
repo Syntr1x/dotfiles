@@ -50,5 +50,5 @@ install_sddm_astronaut_theme
 echo "Running theme selection script..."
 /home/$USER/.config/hypr/scripts/themeselect.sh
 
-echo "Cleaning up..."; sudo rm -rf /home/$USER/hyprconf.syn /home/$USER/tempconf /home/$USER/.config/install.sh /home/$USER/.config/README.md /home/$USER/.config/LICENSE /home/$USER/.config/Ghostty-themes /home/$USER/.config/Rofi-themes /home/$USER/.config/bluetooth.desktop /home/$USER/.config/themeselector.desktop
+echo "Cleaning up..."; sudo rm -rf /home/$USER/hyprconf.syn /home/$USER/tempconf /home/$USER/.config/install.sh /home/$USER/.config/README.md /home/$USER/.config/LICENSE /home/$USER/.config/Ghostty-themes /home/$USER/.config/Rofi-themes /home/$USER/.config/themeselector.desktop
 echo "Installation complete. Please restart your session."
