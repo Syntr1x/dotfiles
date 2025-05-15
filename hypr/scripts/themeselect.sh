@@ -6,19 +6,22 @@ wallpaper_config_file="$HOME/.config/hypr/hyprpaper.conf"
 rofi_config_file="$HOME/.config/rofi/config.rasi"
 
 # Define available options
-themes=("syn-beige" "syn-Broadcast" "syn-mellow" "syn-Ocean" "IC_Orange_PPL" )
-wallpapers=("Flowers.png" "darkPlants.jpg" "pinkRose.jpg" "bluesky.jpg" "TrainPath.png" )
-rofi_themes=("/usr/share/rofi/themes/rounded-beige.rasi" "/usr/share/rofi/themes/rounded-dark.rasi" "/usr/share/rofi/themes/rounded-pink.rasi" "/usr/share/rofi/themes/rounded-blue.rasi" "/usr/share/rofi/themes/rounded-orange.rasi" )
+themes=("syn-beige" "syn-Broadcast" "syn-mellow" "syn-Ocean" "IC_Orange_PPL")
+wallpapers=("Flowers.png" "darkPlants.jpg" "pinkRose.jpg" "bluesky.jpg" "TrainPath.png")
+rofi_themes=(
+    "/usr/share/rofi/themes/rounded-beige.rasi"
+    "/usr/share/rofi/themes/rounded-dark.rasi"
+    "/usr/share/rofi/themes/rounded-pink.rasi"
+    "/usr/share/rofi/themes/rounded-blue.rasi"
+    "/usr/share/rofi/themes/rounded-orange.rasi"
+)
 
 # Function to set the selected terminal theme
 set_theme() {
     local theme=$1
     echo "Setting the theme to $theme..."
 
-    # Comment out all theme lines first
     sudo -E sed -i 's/^theme =/#theme =/' "$theme_config_file"
-
-    # Uncomment the selected theme line
     sudo -E sed -i "s/^#theme = $theme/theme = $theme/" "$theme_config_file"
 
     echo "Theme changed to $theme."
@@ -29,10 +32,7 @@ uncomment_wallpaper() {
     local wallpaper=$1
     echo "Setting wallpaper to: $wallpaper..."
 
-    # Comment all relevant lines
     sudo -E sed -i -E 's/^(preload|wallpaper|splash) =/#\1 =/' "$wallpaper_config_file"
-
-    # Uncomment only the selected wallpaper line
     sudo -E sed -i "/$wallpaper/s/^#//" "$wallpaper_config_file"
 
     echo "Wallpaper changed to $wallpaper."
@@ -48,14 +48,46 @@ set_rofi_theme() {
         return 1
     fi
 
-    # Remove any existing @theme lines
     sudo -E sed -i '/^\s*@theme/d' "$rofi_config_file"
-
-    # Add the new @theme line at the end using tee to avoid root-owned temp files
     echo "@theme \"$rofi_theme\"" | sudo -E tee -a "$rofi_config_file" > /dev/null
 
     echo "Rofi theme changed to $rofi_theme."
 }
+
+# Function to reload wallpaper
+reload_wallpaper() {
+    echo "Reloading wallpaper..."
+    if [[ -x "$HOME/.config/hypr/scripts/reload-hyprpaper.sh" ]]; then
+        nohup "$HOME/.config/hypr/scripts/reload-hyprpaper.sh" >/dev/null 2>&1 &
+        sleep 1
+    else
+        echo "Warning: reload-hyprpaper.sh not found or not executable."
+    fi
+}
+
+# --- Systemwide theme shortcut ---
+read -p "Do you want to apply a full systemwide theme (theme, wallpaper, Rofi)? (y/n): " apply_all
+if [[ "$apply_all" =~ ^[Yy]$ ]]; then
+    echo "Available system themes:"
+    for i in "${!themes[@]}"; do
+        echo "$((i+1)). ${themes[$i]}"
+    done
+
+    read -p "Enter the number corresponding to the systemwide theme you want to apply: " theme_index
+    if [[ "$theme_index" -ge 1 && "$theme_index" -le "${#themes[@]}" ]]; then
+        index=$((theme_index-1))
+        set_theme "${themes[$index]}"
+        uncomment_wallpaper "${wallpapers[$index]}"
+        set_rofi_theme "${rofi_themes[$index]}"
+        reload_wallpaper
+
+        echo "✅ Systemwide theme applied successfully."
+        exit 0
+    else
+        echo "Invalid selection. Exiting."
+        exit 1
+    fi
+fi
 
 # --- Theme selection ---
 echo "Available themes:"
@@ -101,13 +133,5 @@ else
     echo "Invalid Rofi theme selection. Skipping Rofi theme change."
 fi
 
-# --- Reload Wallpaper ---
-echo "Reloading wallpaper..."
-if [[ -x "$HOME/.config/hypr/scripts/reload-hyprpaper.sh" ]]; then
-    nohup "$HOME/.config/hypr/scripts/reload-hyprpaper.sh" >/dev/null 2>&1 &
-    sleep 1
-else
-    echo "Warning: reload-hyprpaper.sh not found or not executable."
-fi
-
+reload_wallpaper
 echo "✅ Theme, wallpaper, and Rofi theme have been successfully changed!"
