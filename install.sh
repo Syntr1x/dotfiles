@@ -19,7 +19,7 @@ install_yay_packages() {
 
 # Clone repo and copy configs
 copy_configs() {
-  git clone https://github.com/Syntr1x/hyprconf.syn /home/$USER/tempconf
+  git clone https://github.com/Syntr1x/dotfiles /home/$USER/tempconf
   sudo cp -r /home/$USER/tempconf/* /home/$USER/.config/ && sudo chown -R $USER:$USER /home/$USER/.config/hypr/scripts && sudo chattr -i /home/$USER/.config/hypr/scripts/* && chmod +x /home/$USER/.config/hypr/scripts/*
   sudo cp /home/$USER/tempconf/Rofi-themes/*.rasi /usr/share/rofi/themes
   sudo cp /home/$USER/tempconf/Ghostty-themes/* /usr/share/ghostty/themes
