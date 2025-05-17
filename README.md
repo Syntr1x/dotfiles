@@ -23,7 +23,7 @@ But be aware:
 
 If you find any obvious problems be sure to reach out!
 
-Automatic install:
+# Automatic install:
 ```sh
 sh -c "$(curl -fsSL https://raw.githubusercontent.com/Syntr1x/dotfiles/master/install.sh)"
 ```
