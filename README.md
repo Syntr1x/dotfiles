@@ -27,6 +27,36 @@ If you find any obvious problems be sure to reach out!
 ```sh
 sh -c "$(curl -fsSL https://raw.githubusercontent.com/Syntr1x/dotfiles/master/install.sh)"
 ```
+# Keybinds 
+
+-$mainMod, W, exec, killall -SIGUSR1 waybar # Hide toggle waybar
+
+-$mainMod, Q, exec, ghostty # Open TTY
+
+-$mainMod, C, killactive # Close current window
+
+-$mainMod, M, exit # Exit Hyprland
+
+-$mainMod, E, exec, ~/.config/hypr/scripts/filemanager.sh # Opens the filemanager
+
+-$mainMod, T, togglefloating # Toggle between tiling and floating window
+
+-$mainMod, F, fullscreen # Open the window in fullscreen
+
+-$mainMod, R, exec, rofi -show drun # Open rofi
+
+-$mainMod, P, pseudo, # dwindle
+
+-$mainMod, J, togglesplit, # dwindle
+
+-$mainMod, B, exec, ~/.config/hypr/scripts/browser.sh # Opens the browser
+
+-$mainMod SHIFT, B, exec, ~/.config/hypr/scripts/reload-waybar.sh # Reload Waybar
+
+-$mainMod SHIFT, W, exec, ~/.config/hypr/scripts/reload-hyprpaper.sh # Reload hyprpaper after a changing the wallpaper
+
+-$mainMod SHIFT, R, exec, killall rofi # kills rofi
+
 
 # This is only an example how it looks out of the box:
 
