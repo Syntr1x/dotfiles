@@ -60,7 +60,7 @@ sh -c "$(curl -fsSL https://raw.githubusercontent.com/Syntr1x/dotfiles/master/in
 
 # This is only an example how it looks out of the box:
 
-- Just know fastfetch wont look like in the examples, was too lazy to change it.
+- Anime bs wont be in the fastfetch config when installed via the script, dont worry.
 
 **Beige:**
 ![image](https://github.com/user-attachments/assets/f70eaccf-d803-4396-adcd-7e8e4d33efd7)
