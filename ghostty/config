@@ -7,5 +7,6 @@ theme = syn-beige
 #theme = syn-Broadcast
 #theme = syn-Ocean
 #theme = IC_Orange_PPL
+#theme = GruvboxDarkHard
 #><><Keybinds><><#
 keybind = ctrl+ö=toggle_tab_overview
