@@ -7,14 +7,15 @@ rofi_config_file="$HOME/.config/rofi/config.rasi"
 wallpaper_dir="$HOME/.config/hypr/Wallpapers"
 
 # ----------- THEMES -----------
-themes=("syn-beige" "syn-Broadcast" "syn-mellow" "syn-Ocean" "IC_Orange_PPL")
-wallpapers=("Flowers.png" "darkPlants.jpg" "pinkRose.jpg" "bluesky.jpg" "TrainPath.png")
+themes=("syn-beige" "syn-Broadcast" "syn-mellow" "syn-Ocean" "IC_Orange_PPL" "GruvboxDarkHard")
+wallpapers=("Flowers.png" "darkPlants.jpg" "pinkRose.jpg" "bluesky.jpg" "TrainPath.png" "Arch_retro.png")
 rofi_themes=(
     "/usr/share/rofi/themes/rounded-beige.rasi"
     "/usr/share/rofi/themes/rounded-dark.rasi"
     "/usr/share/rofi/themes/rounded-pink.rasi"
     "/usr/share/rofi/themes/rounded-blue.rasi"
     "/usr/share/rofi/themes/rounded-orange.rasi"
+    "/usr/share/rofi/themes/rounded-retro.rasi"
 )
 
 # ----------- STYLE VARIABLES USING TPUT -----------
