@@ -4,21 +4,21 @@
 theme_config_file="$HOME/.config/ghostty/config"
 wallpaper_config_file="$HOME/.config/hypr/hyprpaper.conf"
 rofi_config_file="$HOME/.config/rofi/config.rasi"
-waybar_style_file="$HOME/.config/waybar/style.css"   # [WAYBAR]
+waybar_style_file="$HOME/.config/waybar/style.css"   
 wallpaper_dir="$HOME/.config/hypr/Wallpapers"
 
 # ----------- THEMES -----------
 themes=("syn-beige" "syn-Broadcast" "syn-mellow" "syn-Ocean" "IC_Orange_PPL" "GruvboxDarkHard")
 wallpapers=("Flowers.png" "darkPlants.jpg" "pinkRose.jpg" "bluesky.jpg" "TrainPath.png" "Arch_retro.png")
 rofi_themes=(
-    "/usr/share/rofi/themes/rounded-beige.rasi"
-    "/usr/share/rofi/themes/rounded-dark.rasi"
-    "/usr/share/rofi/themes/rounded-pink.rasi"
-    "/usr/share/rofi/themes/rounded-blue.rasi"
-    "/usr/share/rofi/themes/rounded-orange.rasi"
-    "/usr/share/rofi/themes/rounded-retro.rasi"
+    "/usr/share/rofi/themes/rounded-beige.rasi"  # syn-beige
+    "/usr/share/rofi/themes/rounded-dark.rasi"   # syn-Broadcast
+    "/usr/share/rofi/themes/rounded-pink.rasi"   # syn-mellow
+    "/usr/share/rofi/themes/rounded-blue.rasi"   # syn-Ocean
+    "/usr/share/rofi/themes/rounded-orange.rasi" # IC_Orange_PPL
+    "/usr/share/rofi/themes/rounded-retro.rasi"  # GruvboxDarkHard
 )
-waybar_colors=(               # [WAYBAR]
+waybar_colors=(               
     "#d8c8b3"  # syn-beige
     "#888888"  # syn-Broadcast
     "#f0a0c0"  # syn-mellow
