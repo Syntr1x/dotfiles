@@ -23,7 +23,7 @@ waybar_colors=(
     "#888888"  # syn-Broadcast
     "#f0a0c0"  # syn-mellow
     "#2c88d9"  # syn-Ocean
-    "#ff8800"  # IC_Orange_PPL
+    "#fed79d"  # IC_Orange_PPL
     "#d8c8b3"  # GruvboxDarkHard
 )
 
