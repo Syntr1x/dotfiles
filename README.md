@@ -61,6 +61,7 @@ sh -c "$(curl -fsSL https://raw.githubusercontent.com/Syntr1x/dotfiles/master/in
 # This is only an example how it looks out of the box:
 
 - Anime bs wont be in the fastfetch config when installed via the script, dont worry.
+- There is also a waybar border option that is toggleable in the themeselect.sh script if you want that, just havent attached the images yet (or wont cause thats gonna be alot more of images i need to paste in here; will do that when i find a better way to showcase the themes).
 
 **Beige:**
 ![image](https://github.com/user-attachments/assets/f70eaccf-d803-4396-adcd-7e8e4d33efd7)
