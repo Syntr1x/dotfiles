@@ -81,7 +81,7 @@ set_waybar_color() {
     local color="$1"
     echo -e "${CYAN}→ Updating Waybar border color to ${color}...${RESET}"
     if [[ -f "$waybar_style_file" ]]; then
-        sed -i 's/@define-color bordercolor .*/@define-color bordercolor '"$color"';/' "$waybar_style_file"
+        sudo sed -i 's/@define-color bordercolor .*/@define-color bordercolor '"$color"';/' "$waybar_style_file"
         echo -e "${GREEN}✓ Waybar color updated.${RESET}"
         echo -e "${CYAN}→ Reloading Waybar...${RESET}"
         pkill -SIGUSR2 waybar && echo -e "${GREEN}✓ Waybar reloaded.${RESET}" || echo -e "${RED}✗ Failed to reload Waybar.${RESET}"
