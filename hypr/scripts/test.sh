@@ -146,6 +146,7 @@ if [[ "$apply_all" =~ ^[Yy]$ ]]; then
 
   restart_waybar
   reload_wallpaper
+  sleep 2.2
   echo -e "${GREEN}✅ Full theme applied.${RESET}"
   exit 0
 fi
@@ -172,4 +173,5 @@ fi
 
 restart_waybar
 reload_wallpaper
+sleep 2.2
 echo -e "\n${GREEN}✅ All changes applied.${RESET}"
