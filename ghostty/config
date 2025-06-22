@@ -2,11 +2,13 @@
 window-decoration = false
 
 #><><Themes><><#
+# Themes called syn-... are just recolors of some themes in ghostty, everything after is the original name#
 #theme = syn-mellow
 theme = syn-beige
 #theme = syn-Broadcast
 #theme = syn-Ocean
 #theme = IC_Orange_PPL
 #theme = GruvboxDarkHard
+#theme = syn-rose-pine
 #><><Keybinds><><#
 keybind = ctrl+ö=toggle_tab_overview
