@@ -33,7 +33,7 @@
 window#waybar {
     background-color: rgba(23,23,23,0.5);
     border-bottom: 0px solid #ffffff;
-    border: 1px solid @bordercolor;
+    border: 2px solid @bordercolor;
     /* color: #FFFFFF; */
     transition-property: background-color;
     transition-duration: .5s;
