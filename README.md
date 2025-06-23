@@ -87,4 +87,10 @@ sh -c "$(curl -fsSL https://raw.githubusercontent.com/Syntr1x/dotfiles/master/in
 ![image](https://github.com/user-attachments/assets/5b40da5b-7250-4828-ba80-d4b53ebf4a10)
 ![image](https://github.com/user-attachments/assets/739ac406-ec77-477e-a403-9728a4941349)
 ![image](https://github.com/user-attachments/assets/627aa0c5-02e6-4eaa-b843-78f2cf94a083)
+**Kirby**
+![image](https://github.com/user-attachments/assets/884ef343-6df7-4862-8d68-2938c8e58f70)
+![image](https://github.com/user-attachments/assets/7012e029-8885-4cbd-8040-87a7190129b9)
+![image](https://github.com/user-attachments/assets/2a51eecd-14ef-4cda-aa13-1a394b882e40)
+
+
 
