@@ -92,12 +92,16 @@ set_waybar_color() {
 
 toggle_waybar_border() {
   if [[ $1 =~ ^[Yy]$ ]]; then
-    sudo sed -i 's|background-color: rgba(23,23,23,0);|background-color: rgba(23,23,23,0.5);|' "$waybar_css"
-    sudo sed -i 's|/\*border: 1px.*\*/|border: 1px solid @bordercolor;|' "$waybar_css"
+    sudo sed -i \
+      -e 's|background-color: rgba(23,23,23,0);|background-color: rgba(23,23,23,0.5);|' \
+      -e 's|^[[:space:]]*/\*border: 2px solid @bordercolor;\*/|border: 2px solid @bordercolor;|' \
+      "$waybar_css"
     return 0
   else
-    sudo sed -i 's|background-color: rgba(23,23,23,0.5);|background-color: rgba(23,23,23,0);|' "$waybar_css"
-    sudo sed -i 's|^\(.*\)border: 1px solid @bordercolor;|\1/*border: 1px solid @bordercolor;*/|' "$waybar_css"
+    sudo sed -i \
+      -e 's|background-color: rgba(23,23,23,0.5);|background-color: rgba(23,23,23,0);|' \
+      -e 's|^[[:space:]]*border: 2px solid @bordercolor;|/*border: 2px solid @bordercolor;*/|' \
+      "$waybar_css"
     return 1
   fi
 }
