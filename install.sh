@@ -7,7 +7,7 @@ install_Yay() {
 
 # Install required pacman packages
 install_pacman_packages() {
-  local REQUIRED_PKGS=("waybar" "rofi-wayland" "hyprland" "nano" "ghostty" "hyprpaper" "dolphin" "ark" "fastfetch" "btop" "ttf-nerd-fonts-symbols" "ttf-font-awesome" "networkmanager" "flatpak" "kitty" )
+  local REQUIRED_PKGS=("waybar" "rofi-wayland" "hyprland" "nano" "ghostty" "hyprpaper" "dolphin" "ark" "fastfetch" "btop" "ttf-nerd-fonts-symbols" "ttf-font-awesome" "networkmanager" "flatpak" "kitty" "reflector")
   for pkg in "${REQUIRED_PKGS[@]}"; do pacman -Q "$pkg" &>/dev/null || sudo pacman -S --noconfirm "$pkg"; done
 }
 
@@ -36,6 +36,11 @@ install_sddm_astronaut_theme() {
   read -p "Install SDDM Astronaut theme? (y/n): " choice
   [[ "$choice" =~ ^[yY](es)?$ ]] && { sh -c "$(curl -fsSL https://raw.githubusercontent.com/keyitdev/sddm-astronaut-theme/master/setup.sh)"; sudo systemctl enable sddm --now; } || echo "Skipping SDDM Astronaut theme installation."
 }
+# Update pacman mirrorlist
+reflector_mirrorlist() {
+  read -p "Update mirrorlist with reflector? (y/n): " c
+  [[ "$c" =~ ^[yY]$ ]] && read -p "Enter country code (e.g. DE): " cc && sudo reflector -p https --sort rate -c "$cc" --verbose --save /etc/pacman.d/mirrorlist
+}
 # Main script
 if [ "$(id -u)" -eq 0 ]; then echo "Do not run as root. Use sudo when prompted."; exit 1; fi
 install_Yay
@@ -43,6 +48,7 @@ install_pacman_packages
 install_yay_packages
 copy_configs
 enable_network_manager
+reflector_mirrorlist
 install_sddm_astronaut_theme
 
 # Run theme selection script 
