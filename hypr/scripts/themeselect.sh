@@ -9,7 +9,7 @@ waybar_css="$config_dir/waybar/style.css"
 wallpaper_dir="$config_dir/hypr/Wallpapers"
 reload_script="$config_dir/hypr/scripts/reload-hyprpaper.sh"
 
-themes=("syn-beige" "syn-Broadcast" "syn-mellow" "syn-Ocean" "IC_Orange_PPL" "GruvboxDarkHard" "syn-rose-pine")
+themes=("syn-beige" "syn-Broadcast" "syn-mellow" "syn-Ocean" "IC_Orange_PPL" "Gruvbox" "syn-rose-pine")
 wallpapers=("Flowers.png" "darkPlants.jpg" "pinkRose.jpg" "bluesky.jpg" "TrainPath.png" "Arch_retro.png" "kirby.jpg")
 rofi_themes=(
   "/usr/share/rofi/themes/rounded-beige.rasi"
