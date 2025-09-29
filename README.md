@@ -1,6 +1,6 @@
 # Disclaimer and Setup
 
-Just my Setup for hyprland, hyprpaper, waybar, wlogout, rofi, ghostty and wallpapers (with a simple themeselector script). 
+Just my arch Setup for hyprland, hyprpaper, waybar, wlogout, rofi, ghostty and wallpapers (with a simple themeselector script). 
 
 Uses some files from: 
 
