@@ -9,8 +9,8 @@ waybar_css="$config_dir/waybar/style.css"
 wallpaper_dir="$config_dir/hypr/Wallpapers"
 reload_script="$config_dir/hypr/scripts/reload-hyprpaper.sh"
 
-themes=("syn-beige" "syn-Broadcast" "syn-mellow" "syn-Ocean" "IC_Orange_PPL" "Gruvbox" "syn-rose-pine")
-wallpapers=("Flowers.png" "darkPlants.jpg" "pinkRose.jpg" "bluesky.jpg" "TrainPath.png" "Arch_retro.png" "kirby.jpg")
+themes=("syn-beige" "syn-Broadcast" "syn-mellow" "syn-Ocean" "IC_Orange_PPL" "Gruvbox" "syn-rose-pine" "syn-Tango")
+wallpapers=("Flowers.png" "darkPlants.jpg" "pinkRose.jpg" "bluesky.jpg" "TrainPath.png" "Arch_retro.png" "kirby.jpg" "Moondrop_white.jpg")
 rofi_themes=(
   "/usr/share/rofi/themes/rounded-beige.rasi"
   "/usr/share/rofi/themes/rounded-dark.rasi"
@@ -19,8 +19,9 @@ rofi_themes=(
   "/usr/share/rofi/themes/rounded-orange.rasi"
   "/usr/share/rofi/themes/rounded-retro.rasi"
   "/usr/share/rofi/themes/rounded-kirby.rasi"
+  "/usr/share/rofi/themes/rounded-white.rasi"
 )
-waybar_colors=("#d8c8b3" "#888888" "#f0a0c0" "#a1cdf3" "#fed79d" "#d8c8b3" "#fdcbe6")
+waybar_colors=("#d8c8b3" "#888888" "#f0a0c0" "#a1cdf3" "#fed79d" "#d8c8b3" "#fdcbe6" "#888888")
 
 # ------------ STYLE ------------
 BOLD=$(tput bold)
