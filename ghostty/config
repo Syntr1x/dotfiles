@@ -10,5 +10,6 @@ theme = syn-beige
 #theme = IC_Orange_PPL
 #theme = GruvboxDarkHard
 #theme = syn-rose-pine
+#theme = syn-Tango
 #><><Keybinds><><#
 keybind = ctrl+ö=toggle_tab_overview
