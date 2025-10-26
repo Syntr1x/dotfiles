@@ -9,7 +9,7 @@ wallpaper_dir="$config_dir/hypr/Wallpapers"
 reload_script="$config_dir/hypr/scripts/reload-hyprpaper.sh"
 
 themes=("syn-beige" "syn-Broadcast" "syn-mellow" "syn-Ocean" "IC_Orange_PPL" "Gruvbox" "syn-rose-pine" "syn-Tango")
-theme_names=("Beige" "Broadcast" "Mellow" "Ocean" "Orange PPL" "Gruvbox" "Rose Pine" "Tango")
+theme_names=("Beige" "Dark" "Purple" "Blue" "Orange" "Gruvbox" "Kirby" "Moondrop(white/Red)")
 wallpapers=("Flowers.png" "darkPlants.jpg" "pinkRose.jpg" "bluesky.jpg" "TrainPath.png" "Arch_retro.png" "kirby.jpg" "Moondrop_white.jpg")
 rofi_themes=(
   "/usr/share/rofi/themes/rounded-beige.rasi"
