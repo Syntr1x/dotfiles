@@ -1,6 +1,5 @@
 #!/bin/bash
 
-# ------------ CONFIG ------------
 config_dir="$HOME/.config"
 theme_cfg="$config_dir/ghostty/config"
 wallpaper_cfg="$config_dir/hypr/hyprpaper.conf"
@@ -10,6 +9,7 @@ wallpaper_dir="$config_dir/hypr/Wallpapers"
 reload_script="$config_dir/hypr/scripts/reload-hyprpaper.sh"
 
 themes=("syn-beige" "syn-Broadcast" "syn-mellow" "syn-Ocean" "IC_Orange_PPL" "Gruvbox" "syn-rose-pine" "syn-Tango")
+theme_names=("Beige" "Broadcast" "Mellow" "Ocean" "Orange PPL" "Gruvbox" "Rose Pine" "Tango")
 wallpapers=("Flowers.png" "darkPlants.jpg" "pinkRose.jpg" "bluesky.jpg" "TrainPath.png" "Arch_retro.png" "kirby.jpg" "Moondrop_white.jpg")
 rofi_themes=(
   "/usr/share/rofi/themes/rounded-beige.rasi"
@@ -30,7 +30,6 @@ GREEN=$(tput setaf 2)
 CYAN=$(tput setaf 6)
 YELLOW=$(tput setaf 3)
 RED=$(tput setaf 1)
-
 # ------------ HELPERS ------------
 print_header() {
   echo -e "${CYAN}${BOLD}\n╔═══════════════════════════════════════╗"
@@ -39,11 +38,23 @@ print_header() {
 }
 
 display_current_settings() {
-  local current_theme=$(grep '^theme =' "$theme_cfg" | cut -d= -f2 | xargs)
+  local current_theme_id=$(grep '^theme =' "$theme_cfg" | cut -d= -f2 | xargs)
   local current_rofi=$(grep '@theme' "$rofi_cfg" | tail -1 | cut -d'"' -f2)
   local current_wallpaper=$(grep -v '^#' "$wallpaper_cfg" | grep wallpaper | cut -d, -f2 | xargs)
   local current_waybar=$(awk '/@define-color bordercolor/ {gsub(/;/,"",$3); print $3; exit}' "$waybar_css")
-  echo -e "${YELLOW}Current Theme:${RESET} ${current_theme:-Not set}"
+  
+  local friendly_theme="Not set"
+  if [[ -n "$current_theme_id" ]]; then
+    friendly_theme="$current_theme_id"
+    for i in "${!themes[@]}"; do
+      if [[ "${themes[$i]}" == "$current_theme_id" ]]; then
+        friendly_theme="${theme_names[$i]}"
+        break
+      fi
+    done
+  fi
+
+  echo -e "${YELLOW}Current Theme:${RESET} ${friendly_theme:-Not set}"
   echo -e "${YELLOW}Rofi Theme:${RESET} ${current_rofi:-Not set}"
   echo -e "${YELLOW}Wallpaper:${RESET} ${current_wallpaper:-Not set}"
   echo -e "${YELLOW}Waybar Color:${RESET} ${current_waybar:-Not set}"
@@ -69,9 +80,10 @@ get_selection() {
 
 # ------------ SETTERS ------------
 set_theme() {
+  # Keep theme identifiers intact for config, but show friendly name to user
   sudo sed -i 's/^theme =/#theme =/' "$theme_cfg"
   sudo sed -i "s/^#theme = ${themes[$1]}/theme = ${themes[$1]}/" "$theme_cfg"
-  echo -e "${GREEN}✓ Theme set to ${themes[$1]}${RESET}"
+  echo -e "${GREEN}✓ Theme set to ${theme_names[$1]}${RESET}"
 }
 
 set_wallpaper() {
@@ -137,8 +149,8 @@ display_current_settings
 
 read -rp $'\nApply full theme (wallpaper, rofi, waybar)? [y/n]: ' apply_all
 if [[ "$apply_all" =~ ^[Yy]$ ]]; then
-  print_menu themes "System Themes"
-  idx=$(get_selection "Choose theme" themes) || { echo -e "${RED}✗ Invalid selection.${RESET}"; exit 1; }
+  print_menu theme_names "System Themes"
+  idx=$(get_selection "Choose theme" theme_names) || { echo -e "${RED}✗ Invalid selection.${RESET}"; exit 1; }
   set_theme "$idx"
   set_wallpaper "$idx"
   set_rofi "$idx"
@@ -158,8 +170,8 @@ if [[ "$apply_all" =~ ^[Yy]$ ]]; then
 fi
 
 # ---- Individual Mode ----
-print_menu themes "Terminal Themes"
-idx=$(get_selection "Choose theme" themes) && set_theme "$idx"
+print_menu theme_names "Terminal Themes"
+idx=$(get_selection "Choose theme" theme_names) && set_theme "$idx"
 
 print_menu wallpapers "Wallpaper Grid Preview"
 preview_wallpapers_grid
