@@ -11,5 +11,6 @@ theme = syn-beige
 #theme = GruvboxDarkHard
 #theme = syn-rose-pine
 #theme = syn-Tango
+#theme = Tomorrow
 #><><Keybinds><><#
 keybind = ctrl+ö=toggle_tab_overview
