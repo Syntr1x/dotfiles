@@ -88,6 +88,7 @@ set_theme() {
 
 set_wallpaper() {
   {
+    echo "splash = false"
     echo "wallpaper {"
     echo "    monitor = "
     echo "    path = ~/.config/hypr/Wallpapers/${wallpapers[$1]}"
