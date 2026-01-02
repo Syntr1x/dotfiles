@@ -89,7 +89,7 @@ set_theme() {
 set_wallpaper() {
   {
     echo "wallpaper {"
-    echo "    monitor = DP-1"
+    echo "    monitor = "
     echo "    path = ~/.config/hypr/Wallpapers/${wallpapers[$1]}"
     echo "    fit_mode = cover"
     echo "}"
