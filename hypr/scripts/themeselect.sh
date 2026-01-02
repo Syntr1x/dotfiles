@@ -87,8 +87,14 @@ set_theme() {
 }
 
 set_wallpaper() {
-  sudo sed -i -E 's/^(preload|wallpaper|splash) =/#\1 =/' "$wallpaper_cfg"
-  sudo sed -i "/${wallpapers[$1]}/s/^#//" "$wallpaper_cfg"
+  {
+    echo "wallpaper {"
+    echo "    monitor = DP-1"
+    echo "    path = ~/.config/hypr/Wallpapers/${wallpapers[$1]}"
+    echo "    fit_mode = cover"
+    echo "}"
+  } | sudo tee "$wallpaper_cfg" >/dev/null
+
   echo -e "${GREEN}✓ Wallpaper set to ${wallpapers[$1]}${RESET}"
 }
 
