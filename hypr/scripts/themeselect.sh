@@ -8,9 +8,9 @@ waybar_css="$config_dir/waybar/style.css"
 wallpaper_dir="$config_dir/hypr/Wallpapers"
 reload_script="$config_dir/hypr/scripts/reload-hyprpaper.sh"
 
-themes=("syn-beige" "syn-Broadcast" "syn-mellow" "syn-Ocean" "IC_Orange_PPL" "Gruvbox" "syn-rose-pine" "syn-Tango")
-theme_names=("Beige" "Dark" "Purple" "Blue" "Orange" "Gruvbox" "Kirby" "Moondrop(white/Red)")
-wallpapers=("Flowers.png" "darkPlants.jpg" "pinkRose.jpg" "bluesky.jpg" "TrainPath.png" "Arch_retro.png" "kirby.jpg" "Moondrop_white.jpg")
+themes=("syn-beige" "syn-Broadcast" "syn-mellow" "syn-Ocean" "IC_Orange_PPL" "Gruvbox" "syn-rose-pine" "syn-Tango" "Tomorrow")
+theme_names=("Beige" "Dark" "Purple" "Blue" "Orange" "Gruvbox" "Kirby" "Moondrop(white/Red)" "Winter")
+wallpapers=("Flowers.png" "darkPlants.jpg" "pinkRose.jpg" "bluesky.jpg" "TrainPath.png" "Arch_retro.png" "kirby.jpg" "Moondrop_white.jpg" "winter.jpg")
 rofi_themes=(
   "/usr/share/rofi/themes/rounded-beige.rasi"
   "/usr/share/rofi/themes/rounded-dark.rasi"
@@ -20,8 +20,9 @@ rofi_themes=(
   "/usr/share/rofi/themes/rounded-retro.rasi"
   "/usr/share/rofi/themes/rounded-kirby.rasi"
   "/usr/share/rofi/themes/rounded-white.rasi"
+  "/usr/share/rofi/themes/rounded-winter.rasi"
 )
-waybar_colors=("#d8c8b3" "#888888" "#f0a0c0" "#a1cdf3" "#fed79d" "#d8c8b3" "#fdcbe6" "#888888")
+waybar_colors=("#d8c8b3" "#888888" "#f0a0c0" "#a1cdf3" "#fed79d" "#d8c8b3" "#fdcbe6" "#888888" "#888888")
 
 # ------------ STYLE ------------
 BOLD=$(tput bold)
