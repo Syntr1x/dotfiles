@@ -12,5 +12,6 @@ theme = syn-beige
 #theme = syn-rose-pine
 #theme = syn-Tango
 #theme = Tomorrow
+#theme = syn-green
 #><><Keybinds><><#
 keybind = ctrl+ö=toggle_tab_overview
