@@ -20,7 +20,6 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("waybar")
     hl.exec_cmd("hyprpaper")
     hl.exec_cmd("dunst")
-    hl.exec_async("[workspace 5 silent] /home/maris/.config/hypr/scripts/openrgb.sh")
 end)
 
 -------------------------------
