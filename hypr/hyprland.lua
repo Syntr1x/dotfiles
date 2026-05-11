@@ -137,7 +137,7 @@ hl.bind(mainMod .. " + F",           hl.dsp.window.fullscreen({ action = "toggle
 hl.bind(mainMod .. " + R",           hl.dsp.exec_cmd("rofi -show drun"))
 hl.bind(mainMod .. " + P",           hl.dsp.window.pseudo({ action = "toggle" }))
 hl.bind(mainMod .. " + J",           hl.dsp.layout("togglesplit"))
-hl.bind(mainMod .. " + B",           hl.dsp.exec_cmd("/home/maris/Zen/zen/zen"))
+hl.bind(mainMod .. " + B",           hl.dsp.exec_cmd("/home/maris/zen/zen"))
 hl.bind(mainMod .. " + SHIFT + B",   hl.dsp.exec_cmd("~/.config/hypr/scripts/reload-waybar.sh"))
 hl.bind(mainMod .. " + SHIFT + W",   hl.dsp.exec_cmd("~/.config/hypr/scripts/reload-hyprpaper.sh"))
 hl.bind(mainMod .. " + SHIFT + R",   hl.dsp.exec_cmd("killall rofi"))
