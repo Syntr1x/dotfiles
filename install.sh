@@ -13,7 +13,7 @@ install_pacman_packages() {
 
 # Install required yay (AUR) packages
 install_yay_packages() {
-  local AUR_PKGS=("wlogout" "vesktop" "pwvucontrol" "phinger-cursors" "zen-browser-bin")
+  local AUR_PKGS=("wlogout" "vesktop" "pwvucontrol" "phinger-cursors")
   for pkg in "${AUR_PKGS[@]}"; do yay -Q "$pkg" &>/dev/null || yay -S --noconfirm "$pkg"; done
 }
 
@@ -36,6 +36,10 @@ install_sddm_astronaut_theme() {
   read -p "Install SDDM Astronaut theme? (y/n): " choice
   [[ "$choice" =~ ^[yY](es)?$ ]] && { sh -c "$(curl -fsSL https://raw.githubusercontent.com/keyitdev/sddm-astronaut-theme/master/setup.sh)"; sudo systemctl enable sddm --now; } || echo "Skipping SDDM Astronaut theme installation."
 }
+# install browser
+install_Zen() {
+  wget https://github.com/zen-browser/desktop/releases/latest/download/zen.linux-x86_64.tar.xz && tar -xf zen.linux-x86_64.tar.xz && rm zen.linux-x86_64.tar.xz
+}
 # Update pacman mirrorlist
 reflector_mirrorlist() {
   read -p "Update mirrorlist with reflector? (y/n): " c
@@ -48,6 +52,7 @@ install_pacman_packages
 install_yay_packages
 copy_configs
 enable_network_manager
+install_Zen
 reflector_mirrorlist
 install_sddm_astronaut_theme
 
