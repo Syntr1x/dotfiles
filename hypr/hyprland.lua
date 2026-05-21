@@ -7,7 +7,7 @@
 ------------------
 hl.monitor({
     output   = "",
-    mode     = "2256x1504@60",
+    mode     = "preferred",
     position = "0x0",
     scale    = 1,
     bitdepth = 10,
