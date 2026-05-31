@@ -144,6 +144,7 @@ hl.bind(mainMod .. " + SHIFT + R", hl.dsp.exec_cmd("killall rofi"))
 hl.bind(mainMod .. " + D", hl.dsp.exec_cmd("tidal-hifi"))
 hl.bind(mainMod .. " + S", hl.dsp.exec_cmd("steam"))
 hl.bind(mainMod .. " + V", hl.dsp.exec_cmd("vesktop"))
+hl.bind(mainMod .. " + N", hl.dsp.exec_cmd("~/.config/hypr/scripts/themenext.sh"))
 
 -- Brightness
 hl.bind("XF86MonBrightnessDown", hl.dsp.exec_cmd("brightnessctl set 10%-"))
