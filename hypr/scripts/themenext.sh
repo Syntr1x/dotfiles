@@ -55,7 +55,7 @@ sed -i "s/^#theme = ${themes[$next_idx]}/theme = ${themes[$next_idx]}/" "$theme_
   echo "}"
 } | tee "$wallpaper_cfg" >/dev/null
 
-sudo sed -i "s/^background = \".*\"/background = \"${wallpapers[$next_idx]}\"/" /usr/share/sddm/themes/silent/configs/defaultsyn.conf
+sed -i "s/^background = \".*\"/background = \"${wallpapers[$next_idx]}\"/" /usr/share/sddm/themes/silent/configs/defaultsyn.conf
 
 sed -i '/^\s*@theme/d' "$rofi_cfg"
 echo "@theme \"${rofi_themes[$next_idx]}\"" | tee -a "$rofi_cfg" >/dev/null
