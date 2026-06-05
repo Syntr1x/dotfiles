@@ -26,6 +26,7 @@ copy_configs() {
   sudo cp /home/$USER/tempconf/.bashrc /home/$USER/
   sudo cp /home/$USER/tempconf/themeselector.desktop /usr/share/applications/
   sudo cp /home/$USER/tempconf/defaultsyn.conf /usr/share/sddm/themes/silent/configs/
+  sudo cp /home/$USER/tempconf/hypr/Wallpapers/* /usr/share/sddm/themes/silent/backgrounds/
   sudo chown -R "$USER":"$USER" ~/.config/rofi
 }
 # Enable NetworkManager
