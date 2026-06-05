@@ -32,6 +32,10 @@ copy_configs() {
 enable_network_manager() {
   sudo systemctl enable --now NetworkManager
 }
+# Enable NetworkManager
+enable_sddm() {
+  sudo systemctl enable --now sddm
+}
 # install browser
 install_Zen() {
   wget https://github.com/zen-browser/desktop/releases/latest/download/zen.linux-x86_64.tar.xz && tar -xf zen.linux-x86_64.tar.xz && rm zen.linux-x86_64.tar.xz
@@ -48,6 +52,7 @@ install_pacman_packages
 install_yay_packages
 copy_configs
 enable_network_manager
+enable_sddm
 install_Zen
 reflector_mirrorlist
 
