@@ -41,6 +41,14 @@ enable_sddm() {
 silent_sddm() {
   sudo sed -i '/^ConfigFile=configs\/default.conf/{s/^/# /;i ConfigFile=configs/defaultsyn.conf
 }' /usr/share/sddm/themes/silent/metadata.desktop
+   sudo tee /etc/sddm.conf > /dev/null << 'EOF'
+[General]
+InputMethod=qtvirtualkeyboard
+GreeterEnvironment=QML2_IMPORT_PATH=/usr/share/sddm/themes/silent/components/,QT_IM_MODULE=qtvirtualkeyboard
+
+[Theme]
+Current=silent
+EOF
 }
 # install browser
 install_Zen() {
