@@ -32,9 +32,14 @@ copy_configs() {
 enable_network_manager() {
   sudo systemctl enable --now NetworkManager
 }
-# Enable NetworkManager
+# Enable Sddm
 enable_sddm() {
   sudo systemctl enable --now sddm
+}
+# Silent SDDM theme config
+silent_sddm() {
+  sudo sed -i '/^ConfigFile=configs\/default.conf/{s/^/# /;i ConfigFile=configs/defaultsyn.conf
+}' /usr/share/sddm/themes/silent/metadata.desktop
 }
 # install browser
 install_Zen() {
@@ -53,6 +58,7 @@ install_yay_packages
 copy_configs
 enable_network_manager
 enable_sddm
+silent_sddm
 install_Zen
 reflector_mirrorlist
 
