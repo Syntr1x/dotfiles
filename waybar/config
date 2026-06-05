@@ -1,0 +1,34 @@
+{
+    "layer": "top",
+    "position": "top",
+
+    "spacing": 4,
+
+    "include": [
+        "/home/maris/tests_opencode/original/waybar/waybar-quicklinks.json",
+        "/home/maris/tests_opencode/original/waybar/modules.json"
+    ],
+    "modules-left": [
+        "custom/appmenu",
+        "group/quicklinks",
+        "custom/media1",
+        "custom/media2",
+        "custom/media3",
+        "hyprland/window"
+    ],
+    "modules-center": [
+        "hyprland/workspaces"
+    ],
+    "modules-right": [
+        "mpd", 
+        "pulseaudio", 
+        "network", 
+        "cpu", 
+        "memory", 
+        "keyboard-state", 
+        "battery", 
+        "clock", 
+        "tray",
+        "custom/exit"
+    ]
+}
