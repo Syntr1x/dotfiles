@@ -7,9 +7,6 @@ Uses some files from:
 - ml4w (https://www.ml4w.com/)
   > &#8593; the beginning of my rice was a modified version of one of his old setups.
 
-- Keyitdev (https://github.com/Keyitdev/sddm-astronaut-theme/tree/master)
-  > &#8593; his install script is straight up used in the install.sh script of mine at the end.
-
 - newmanls (https://github.com/newmanls/rofi-themes-collection?tab=readme-ov-file)
   > &#8593; changed colors of rounded themes to match the wallpapers.
 
