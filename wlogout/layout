@@ -1,6 +1,6 @@
 {
     "label" : "logout",
-    "action" : "killall -9 Hyprland",
+    "action" : "pkill Hyprland",
     "text" : "Exit",
     "keybind" : "e"
 }
