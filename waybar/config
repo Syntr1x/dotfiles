@@ -5,8 +5,8 @@
     "spacing": 4,
 
     "include": [
-        "/home/maris/tests_opencode/original/waybar/waybar-quicklinks.json",
-        "/home/maris/tests_opencode/original/waybar/modules.json"
+        "~/.config/waybar/waybar-quicklinks.json",
+        "~/.config/waybar/modules.json"
     ],
     "modules-left": [
         "custom/appmenu",
