@@ -13,7 +13,7 @@ install_pacman_packages() {
 
 # Install required yay (AUR) packages
 install_yay_packages() {
-  local AUR_PKGS=("wlogout" "vesktop" "pwvucontrol" "phinger-cursors")
+  local AUR_PKGS=("wlogout" "vesktop" "pwvucontrol" "phinger-cursors" "sddm-silent-theme")
   for pkg in "${AUR_PKGS[@]}"; do yay -Q "$pkg" &>/dev/null || yay -S --noconfirm "$pkg"; done
 }
 
@@ -30,11 +30,6 @@ copy_configs() {
 # Enable NetworkManager
 enable_network_manager() {
   sudo systemctl enable --now NetworkManager
-}
-# Install SDDM Astronaut theme if chosen
-install_sddm_astronaut_theme() {
-  read -p "Install SDDM Astronaut theme? (y/n): " choice
-  [[ "$choice" =~ ^[yY](es)?$ ]] && { sh -c "$(curl -fsSL https://raw.githubusercontent.com/keyitdev/sddm-astronaut-theme/master/setup.sh)"; sudo systemctl enable sddm --now; } || echo "Skipping SDDM Astronaut theme installation."
 }
 # install browser
 install_Zen() {
@@ -54,7 +49,6 @@ copy_configs
 enable_network_manager
 install_Zen
 reflector_mirrorlist
-install_sddm_astronaut_theme
 
 # Run theme selection script 
 echo "Running theme selection script..."
