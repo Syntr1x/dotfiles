@@ -7,7 +7,7 @@ install_Yay() {
 
 # Install required pacman packages
 install_pacman_packages() {
-  local REQUIRED_PKGS=("waybar" "rofi" "hyprland" "nano" "ghostty" "hyprpaper" "dolphin" "ark" "fastfetch" "btop" "ttf-nerd-fonts-symbols" "ttf-font-awesome" "ttf-firacode-nerd" "ttf-jetbrains-mono-nerd" "networkmanager" "flatpak" "kitty" "wget" "reflector" "dunst")
+  local REQUIRED_PKGS=("waybar" "rofi" "hyprland" "nano" "ghostty" "hyprpaper" "dolphin" "ark" "fastfetch" "btop" "ttf-nerd-fonts-symbols" "ttf-font-awesome" "ttf-firacode-nerd" "ttf-jetbrains-mono-nerd" "networkmanager" "flatpak" "libnotify" "kitty" "wget" "reflector" "dunst")
   for pkg in "${REQUIRED_PKGS[@]}"; do pacman -Q "$pkg" &>/dev/null || sudo pacman -S --noconfirm "$pkg"; done
 }
 
