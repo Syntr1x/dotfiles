@@ -60,11 +60,6 @@ sed -i "s/^background = \".*\"/background = \"${wallpapers[$next_idx]}\"/" /usr/
 sed -i '/^\s*@theme/d' "$rofi_cfg"
 echo "@theme \"${rofi_themes[$next_idx]}\"" | tee -a "$rofi_cfg" >/dev/null
 
-sed -i \
-  -e 's|background-color: rgba(23,23,23,0);|background-color: rgba(23,23,23,0.5);|' \
-  -e 's|^[[:space:]]*/\*border: 2px solid @bordercolor;\*/|border: 2px solid @bordercolor;|' \
-  "$waybar_css"
-
 sed -i "s/@define-color bordercolor .*/@define-color bordercolor ${waybar_colors[$next_idx]};/" "$waybar_css"
 
 pkill waybar 2>/dev/null; sleep 0.5; nohup waybar >/dev/null 2>&1 &
