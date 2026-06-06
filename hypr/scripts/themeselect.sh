@@ -172,11 +172,8 @@ if [[ "$apply_all" =~ ^[Yy]$ ]]; then
   set_rofi "$idx"
 
   read -rp "Enable Waybar border/background? [y/n]: " border
-  if toggle_waybar_border "$border"; then
-    set_waybar_color "$idx"
-  else
-    echo -e "${YELLOW}→ Waybar border/background disabled — skipping color.${RESET}"
-  fi
+  toggle_waybar_border "$border"
+  set_waybar_color "$idx"
 
   restart_waybar
   reload_wallpaper
@@ -198,12 +195,9 @@ print_menu rofi_themes "Rofi Themes"
 idx=$(get_selection "Choose Rofi theme" rofi_themes) && set_rofi "$idx"
 
 read -rp "Enable Waybar border/background? [y/n]: " border
-if toggle_waybar_border "$border"; then
-  print_menu waybar_colors "Waybar Colors"
-  idx=$(get_selection "Choose Waybar color" waybar_colors) && set_waybar_color "$idx"
-else
-  echo -e "${YELLOW}→ Waybar border/background disabled — skipping color.${RESET}"
-fi
+toggle_waybar_border "$border"
+print_menu waybar_colors "Waybar Colors"
+idx=$(get_selection "Choose Waybar color" waybar_colors) && set_waybar_color "$idx"
 
 restart_waybar
 reload_wallpaper
