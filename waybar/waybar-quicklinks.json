@@ -6,7 +6,7 @@
     }, 
     "custom/quicklink2": {
         "format": "  ",
-        "on-click": "~/zen/zen",
+        "on-click": "~/zen-browser/zen/zen",
         "tooltip-format": "Open the browser"
     },
     "custom/quicklink3": {
