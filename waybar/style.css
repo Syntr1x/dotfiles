@@ -1,0 +1,294 @@
+@define-color bordercolor #f0a0c0;
+@define-color module-bg rgba(20, 20, 20, 0.6);
+@define-color module-bg-hover rgba(40, 40, 40, 0.8);
+@define-color text #ffffff;
+@define-color text-sub #a0a0a0;
+@define-color red #e06c75;
+@define-color green #98c379;
+@define-color yellow #e5c07b;
+@define-color teal #56b6c2;
+
+* {
+    font-family: "Fira Sans Semibold", "JetBrainsMono Nerd Font", "Font Awesome 6 Free", "Font Awesome 6 Brands", sans-serif;
+    border: none;
+    border-radius: 12px;
+}
+
+window#waybar {
+    background: transparent;
+    transition: opacity 0.3s ease;
+}
+
+window#waybar.hidden {
+    opacity: 0.2;
+}
+
+.modules-left,
+.modules-center,
+.modules-right {
+    background-color: rgba(23,23,23,0);
+/*border: 2px solid @bordercolor;*/
+    border-radius: 14px;
+    padding: 2px 6px;
+    margin: 6px 4px;
+}
+
+.modules-left {
+    margin: 6px 4px 6px 10px;
+}
+
+.modules-center {
+    margin: 6px 4px;
+}
+
+.modules-right {
+    margin: 6px 10px 6px 4px;
+}
+
+#workspaces {
+    margin: 2px 0;
+    padding: 0;
+}
+
+#workspaces button {
+    padding: 2px 8px;
+    margin: 2px 2px;
+    border-radius: 10px;
+    color: @text-sub;
+    background: transparent;
+    font-size: 15px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    min-width: 20px;
+}
+
+#workspaces button.active {
+    color: @text;
+    background: @bordercolor;
+    min-width: 28px;
+}
+
+#workspaces button:hover {
+    color: @text;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+#workspaces button.urgent {
+    color: @red;
+    animation: urgent-pulse 1s ease infinite;
+}
+
+@keyframes urgent-pulse {
+    0% { color: @red; }
+    50% { color: #f9b8c4; }
+    100% { color: @red; }
+}
+
+tooltip {
+    border-radius: 10px;
+    background-color: rgba(20, 20, 20, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 12px;
+}
+
+tooltip label {
+    color: @text;
+}
+
+#window {
+    background: @module-bg;
+    margin: 4px 6px;
+    padding: 4px 14px;
+    border-radius: 10px;
+    color: @text;
+    font-size: 14px;
+    font-weight: 400;
+}
+
+window#waybar.empty #window {
+    background-color: transparent;
+}
+
+#custom-appmenu,
+#custom-media1,
+#custom-media2,
+#custom-media3,
+#idle_inhibitor,
+#clock,
+#pulseaudio,
+#network,
+#battery,
+#bluetooth,
+#bluetooth.on,
+#bluetooth.connected,
+#tray {
+    margin: 4px 3px;
+    font-size: 15px;
+    font-weight: 500;
+    color: @text;
+    padding: 3px 10px;
+    background: @module-bg;
+    border-radius: 10px;
+    transition: all 0.2s ease;
+}
+
+#custom-appmenu:hover,
+#custom-media1:hover,
+#custom-media2:hover,
+#custom-media3:hover,
+#idle_inhibitor:hover,
+#clock:hover,
+#pulseaudio:hover,
+#network:hover,
+#battery:hover,
+#bluetooth:hover,
+#bluetooth.on:hover,
+#bluetooth.connected:hover {
+    background: @module-bg-hover;
+}
+
+#custom-appmenu {
+    font-weight: 600;
+    padding: 3px 14px;
+}
+
+#custom-appmenu:hover {
+    background: @module-bg-hover;
+}
+
+#custom-media1, #custom-media2, #custom-media3 {
+    font-size: 17px;
+    padding: 3px 8px;
+}
+
+#custom-media1:hover,
+#custom-media2:hover,
+#custom-media3:hover {
+    color: @text;
+}
+
+#custom-exit {
+    margin: 4px 3px;
+    padding: 3px 12px;
+    font-size: 17px;
+    color: @text-sub;
+    background: @module-bg;
+    border-radius: 10px;
+    transition: all 0.2s ease;
+}
+
+#custom-exit:hover {
+    color: @red;
+    background: rgba(224, 108, 117, 0.15);
+}
+
+#cpu, #memory {
+    font-size: 14px;
+    font-weight: 500;
+    color: @text;
+    padding: 3px 10px;
+    background: @module-bg;
+    border-radius: 10px;
+    margin: 4px 3px;
+    transition: all 0.2s ease;
+}
+
+#cpu:hover, #memory:hover {
+    background: @module-bg-hover;
+}
+
+#disk, #custom-system, #language {
+    margin: 0;
+    padding: 2px 6px;
+    font-size: 14px;
+    color: @text-sub;
+}
+
+#language {
+    margin-right: 6px;
+}
+
+#clock {
+    font-size: 15px;
+    font-weight: 600;
+    padding: 3px 14px;
+}
+
+.modules-right #pulseaudio,
+.modules-right #network,
+.modules-right #battery,
+.modules-right #clock,
+.modules-right #cpu,
+.modules-right #memory {
+    font-size: 16px;
+}
+
+#pulseaudio.muted {
+    color: @text-sub;
+}
+
+#network.disconnected {
+    color: @red;
+}
+
+#bluetooth.off {
+    background: transparent;
+    padding: 0;
+    margin: 0;
+}
+
+#battery.charging, #battery.plugged {
+    color: @teal;
+}
+
+@keyframes blink {
+    from {
+        background-color: transparent;
+        color: @red;
+    }
+    to {
+        background-color: rgba(224, 108, 117, 0.15);
+        color: @text;
+    }
+}
+
+#battery.critical:not(.charging) {
+    color: @red;
+    animation: blink 0.5s linear infinite alternate;
+}
+
+#tray {
+    padding: 3px 6px;
+}
+
+#tray > .passive {
+    -gtk-icon-effect: dim;
+}
+
+#tray > .needs-attention {
+    -gtk-icon-effect: highlight;
+    background-color: @red;
+}
+
+label:focus {
+    background-color: transparent;
+}
+
+#custom-quicklink1,
+#custom-quicklink2,
+#custom-quicklink3 {
+    padding: 3px 8px;
+    margin: 4px 2px;
+    font-size: 17px;
+    color: @text;
+    background: @module-bg;
+    border-radius: 10px;
+    transition: all 0.2s ease;
+}
+
+#custom-quicklink1:hover,
+#custom-quicklink2:hover,
+#custom-quicklink3:hover {
+    color: @text;
+    background: @module-bg-hover;
+}
