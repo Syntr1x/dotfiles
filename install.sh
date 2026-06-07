@@ -5,7 +5,7 @@ install_Yay() {
 }
 
 install_pacman_packages() {
-  local REQUIRED_PKGS=("waybar" "rofi" "hyprland" "nano" "ghostty" "hyprpaper" "dolphin" "ark" "fastfetch" "btop" "networkmanager" "flatpak" "libnotify" "kitty" "wget" "reflector" "dunst" "ttf-nerd-fonts-symbols" "ttf-firacode-nerd" "ttf-jetbrains-mono-nerd" "ttf-font-awesome")
+  local REQUIRED_PKGS=("waybar" "rofi" "hyprland" "nano" "ghostty" "hyprpaper" "dolphin" "ark" "fastfetch" "btop" "networkmanager" "sddm" "pipewire" "flatpak" "libnotify" "kitty" "wget" "reflector" "dunst" "ttf-nerd-fonts-symbols" "ttf-firacode-nerd" "ttf-jetbrains-mono-nerd" "ttf-font-awesome")
   for pkg in "${REQUIRED_PKGS[@]}"; do pacman -Q "$pkg" &>/dev/null || sudo pacman -S --noconfirm "$pkg"; done
 }
 
@@ -41,7 +41,6 @@ enable_network_manager() {
 }
 
 silent_sddm() {
-  # Check theme was installed
   if [ ! -d "/usr/share/sddm/themes/silent" ]; then
     echo "ERROR: sddm-silent-theme not found at /usr/share/sddm/themes/silent"
     exit 1
@@ -62,6 +61,12 @@ EOF
 
 enable_sddm() {
   sudo systemctl enable --now sddm
+}
+
+enable_pipewire() {
+  sudo systemctl enable --now pipewire
+  sudo systemctl enable --now pipewire-pulse
+  sudo systemctl enable --now wireplumber
 }
 
 install_Zen() {
@@ -87,7 +92,8 @@ install_yay_packages
 copy_configs
 silent_sddm                   
 enable_network_manager
-enable_sddm                  
+enable_sddm
+enable_pipewire
 install_Zen
 reflector_mirrorlist
 
