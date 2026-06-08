@@ -18,13 +18,13 @@ copy_configs() {
   rm -rf /home/$USER/tempconf
   git clone https://github.com/Syntr1x/dotfiles /home/$USER/tempconf
 
-  mkdir -p /usr/share/rofi/themes
-  mkdir -p /usr/share/ghostty/themes
-  mkdir -p /usr/share/sddm/themes/silent/configs
-  mkdir -p /usr/share/sddm/themes/silent/backgrounds
+  sudo mkdir -p /usr/share/rofi/themes
+  sudo mkdir -p /usr/share/ghostty/themes
+  sudo mkdir -p /usr/share/sddm/themes/silent/configs
+  sudo mkdir -p /usr/share/sddm/themes/silent/backgrounds
 
   shopt -s dotglob
-  sudo cp -r /home/$USER/tempconf/* /home/$USER/.config/ && sudo chown -R $USER:$USER /home/$USER/.config/hypr/scripts && sudo chattr -i /home/$USER/.config/hypr/scripts/* 2>/dev/null && chmod +x /home/$USER/.config/hypr/scripts/*
+  sudo cp -r /home/$USER/tempconf/* /home/$USER/.config/ && sudo chown -R $USER:$USER /home/$USER/.config && find /home/$USER/.config/hypr/scripts -type f -exec chmod +x {} + 2>/dev/null
   shopt -u dotglob
 
   sudo cp /home/$USER/tempconf/Rofi-themes/*.rasi /usr/share/rofi/themes 2>/dev/null
