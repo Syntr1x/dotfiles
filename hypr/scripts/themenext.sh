@@ -24,7 +24,7 @@ rofi_themes=(
   "/usr/share/rofi/themes/rounded-green.rasi"
   "/usr/share/rofi/themes/rounded-destiny.rasi"
 )
-waybar_colors=("#d8c8b3" "#888888" "#f0a0c0" "#a1cdf3" "#fed79d" "#d8c8b3" "#fdcbe6" "#888888" "#888888" "#8c9180" "#C0884B")
+waybar_colors=("#d8c8b3" "#888888" "#f0a0c0" "#a1cdf3" "#fed79d" "#d8c8b3" "#fdcbe6" "#FB443C" "#FDE094" "#8c9180" "#C0884B")
 
 current_theme=$(grep '^theme =' "$theme_cfg" | cut -d= -f2 | xargs)
 
