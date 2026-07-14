@@ -29,7 +29,7 @@
 
     // Rofi Application Launcher
     "custom/appmenu": {
-        "format": " Theme",
+        "format": "  Theme",
         "on-click": "ghostty -e /home/$USER/.config/hypr/scripts/themeselect.sh",
         "tooltip": false
     },
@@ -67,7 +67,7 @@
 
     // Clock
     "clock": {
-        "format": " {:%a %b %d   %H:%M}",
+        "format": "  {:%a %b %d    %H:%M}",
         "tooltip-format": "<big>{:%Y %B}</big>\n<tt><small>{calendar}</small></tt>",
         "format-alt": "{:%Y-%m-%d}"
     },
@@ -149,19 +149,19 @@
     // Pulseaudio
     "pulseaudio": {
         "format": "{icon} {volume}%",
-        "format-bluetooth": "{volume}% {icon} {format_source}",
-        "format-bluetooth-muted": " {icon} {format_source}",
-        "format-muted": " {format_source}",
+        "format-bluetooth": "{volume}% {icon}  {format_source}",
+        "format-bluetooth-muted": "  {icon} {format_source}",
+        "format-muted": "   {format_source}",
         "format-source": "{volume}% ",
-        "format-source-muted": "",
+        "format-source-muted": "  ",
         "format-icons": {
-            "headphone": "",
-            "hands-free": "",
-            "headset": "",
-            "phone": "",
-            "portable": "",
-            "car": "",
-            "default": ["", "", ""]
+            "headphone": "  ",
+            "hands-free": "  ",
+            "headset": "  ",
+            "phone": "  ",
+            "portable": "  ",
+            "car": "  ",
+            "default": ["  ", "  ", "  "]
         },
         "on-click": "pwvucontrol"
     },
