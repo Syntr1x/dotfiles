@@ -1,7 +1,7 @@
 [Desktop Entry]
 Name=Theme-selector
 Comment=Run my custom bash script
-Exec=ghostty -e /home/$USER/.config/hypr/scripts/themeselect.sh
+Exec=/usr/bin/qs -p /home/$USER/.config/hypr/themeselect/quickshell-theme-selector/shell.qml
 Icon=utilities-terminal
 Terminal=false
 Type=Application
