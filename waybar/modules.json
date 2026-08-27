@@ -30,7 +30,7 @@
     // Rofi Application Launcher
     "custom/appmenu": {
         "format": "  Theme",
-        "on-click": "ghostty -e /home/$USER/.config/hypr/scripts/themeselect.sh",
+        "on-click": "/usr/bin/qs -p /home/$USER/.config/hypr/themeselect/quickshell-theme-selector/shell.qml",
         "tooltip": false
     },
 
