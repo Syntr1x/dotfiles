@@ -1,6 +1,6 @@
 // shell.qml — Quickshell Theme Selector for Hyprland
-// Run: qs -p ~/Tests/quickshell-theme-selector/shell.qml  (or qs -p ~/Tests/quickshell-theme-selector)
-// Backend: apply.sh (same logic as improved themeselect.sh, no sudo)
+// Run: qs -p ~/.config/hypr/themeselect/quickshell-theme-selector  (or qs -p <path>/shell.qml)
+// Backend: apply.sh (same logic as themeselect.sh full mode, no sudo)
 
 import Quickshell
 import Quickshell.Io
@@ -11,7 +11,7 @@ import QtQuick.Layouts
 ShellRoot {
     id: root
 
-    // ── Theme data (mirrors /home/maris/Tests/themeselect.sh) ──
+    // ── Theme data (mirrors themeselect.sh) ──
     property var themes: ["syn-beige","syn-Broadcast","syn-mellow","syn-Ocean","IC_Orange_PPL","Gruvbox","syn-rose-pine","syn-Tango","Tomorrow","syn-green","traffic","syn-mellow-darkmode"]
     property var themeNames: ["Beige","Dark","Purple","Blue","Orange","Gruvbox","Kirby","Moondrop","Winter","Green","Destiny 2","Purple(darkmode)"]
     property var wallpapers: ["Flowers.png","darkPlants.jpg","pinkRose.jpg","bluesky.jpg","TrainPath.png","Arch_retro.png","kirby.jpg","Moondrop_white.jpg","winter.jpg","leaves.jpg","thats_it.jpg","black_oled.jpg"]
@@ -36,8 +36,13 @@ ShellRoot {
     property bool waybarBorder: true
     property string statusMsg: "Select a theme"
     property bool isApplying: false
-    property string wallpaperDir: "/home/maris/.config/hypr/Wallpapers"
-    property string applyScript: "/home/maris/Tests/quickshell-theme-selector/apply.sh"
+    property string wallpaperDir: Quickshell.shellPath("../../Wallpapers")
+    property string wallpaperFallbackDir: {
+        let xdg = Quickshell.env("XDG_CONFIG_HOME");
+        if (!xdg || xdg === "null" || xdg === "") xdg = (Quickshell.env("HOME") || "") + "/.config";
+        return xdg + "/hypr/Wallpapers";
+    }
+    property string applyScript: Quickshell.shellPath("apply.sh")
 
     // detect current theme on startup
     Process {
@@ -198,13 +203,30 @@ ShellRoot {
                                     Layout.fillWidth: true; Layout.fillHeight: true
                                     radius: 10; color: "#121214"; clip: true
                                     Image {
+                                        id: wpImg
                                         anchors.fill: parent
                                         source: "file://" + root.wallpaperDir + "/" + root.wallpapers[index]
                                         fillMode: Image.PreserveAspectCrop
                                         asynchronous: true
                                         cache: true
-                                        // fallback if missing
-                                        onStatusChanged: if(status===Image.Error) source=""
+                                        onStatusChanged: {
+                                            if (status === Image.Error) {
+                                                let fb = "file://" + root.wallpaperFallbackDir + "/" + root.wallpapers[index];
+                                                if (source.toString() !== fb) source = fb;
+                                                else console.log("Wallpaper missing: " + root.wallpapers[index] + " tried " + root.wallpaperDir + " and " + root.wallpaperFallbackDir);
+                                            } else if (status === Image.Ready) {
+                                                // loaded ok
+                                            }
+                                        }
+                                    }
+                                    // subtle placeholder when still broken
+                                    Text {
+                                        visible: wpImg.status === Image.Error
+                                        anchors.centerIn: parent
+                                        text: "🖼 " + root.wallpapers[index]
+                                        color: "#5a5a66"
+                                        font.pixelSize: 9
+                                        font.family: "Fira Sans"
                                     }
                                     // top badges
                                     RowLayout {
