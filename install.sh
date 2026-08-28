@@ -5,7 +5,7 @@ install_Yay() {
 }
 
 install_pacman_packages() {
-  local REQUIRED_PKGS=("waybar" "rofi" "hyprland" "nano" "ghostty" "hyprpaper" "dolphin" "ark" "fastfetch" "btop" "networkmanager" "sddm" "pipewire" "flatpak" "libnotify" "kitty" "wget" "reflector" "dunst" "ttf-nerd-fonts-symbols" "ttf-firacode-nerd" "ttf-jetbrains-mono-nerd" "ttf-font-awesome")
+  local REQUIRED_PKGS=("waybar" "rofi" "hyprland" "nano" "ghostty" "hyprpaper" "dolphin" "ark" "fastfetch" "btop" "networkmanager" "sddm" "pipewire" "quickshell" "flatpak" "libnotify" "kitty" "wget" "reflector" "dunst" "ttf-nerd-fonts-symbols" "ttf-firacode-nerd" "ttf-jetbrains-mono-nerd" "ttf-font-awesome")
   for pkg in "${REQUIRED_PKGS[@]}"; do pacman -Q "$pkg" &>/dev/null || sudo pacman -S --noconfirm "$pkg"; done
 }
 
@@ -24,7 +24,7 @@ copy_configs() {
   sudo mkdir -p /usr/share/sddm/themes/silent/backgrounds
 
   shopt -s dotglob
-  sudo cp -r /home/$USER/tempconf/* /home/$USER/.config/ && sudo chown -R $USER:$USER /home/$USER/.config && find /home/$USER/.config/hypr/scripts -type f -exec chmod +x {} + 2>/dev/null
+  sudo cp -r /home/$USER/tempconf/* /home/$USER/.config/ && sudo chown -R $USER:$USER /home/$USER/.config && find /home/$USER/.config/hypr -type f -name "*.sh" -exec chmod +x {} + 2>/dev/null
   shopt -u dotglob
 
   sudo cp /home/$USER/tempconf/Rofi-themes/*.rasi /usr/share/rofi/themes 2>/dev/null
