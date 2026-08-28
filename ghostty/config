@@ -14,5 +14,6 @@ theme = syn-beige
 #theme = Tomorrow
 #theme = syn-green
 #theme = traffic
+#theme = syn-mellow-darkmode
 #><><Keybinds><><#
 keybind = ctrl+ö=toggle_tab_overview
