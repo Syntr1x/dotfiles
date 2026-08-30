@@ -12,6 +12,7 @@ wallpaper_cfg="$config_dir/hypr/hyprpaper.conf"
 rofi_cfg="$config_dir/rofi/config.rasi"
 waybar_css="$config_dir/waybar/style.css"
 wallpaper_dir="$config_dir/hypr/Wallpapers"
+rofi_dir="/usr/share/rofi/themes"
 reload_script="$config_dir/hypr/scripts/reload-hyprpaper.sh"
 sddm_cfg="/usr/share/sddm/themes/silent/configs/defaultsyn.conf"
 
@@ -19,18 +20,18 @@ themes=("syn-beige" "syn-Broadcast" "syn-mellow" "syn-Ocean" "IC_Orange_PPL" "Gr
 theme_names=("Beige" "Dark" "Purple" "Blue" "Orange" "Gruvbox" "Kirby" "Moondrop" "Winter" "Green" "Destiny 2" "Purple(darkmode)")
 wallpapers=("Flowers.png" "darkPlants.jpg" "pinkRose.jpg" "bluesky.jpg" "TrainPath.png" "Arch_retro.png" "kirby.jpg" "Moondrop_white.jpg" "winter.jpg" "leaves.jpg" "thats_it.jpg" "black_oled.jpg")
 rofi_themes=(
-  "/usr/share/rofi/themes/rounded-beige.rasi"
-  "/usr/share/rofi/themes/rounded-dark.rasi"
-  "/usr/share/rofi/themes/rounded-pink.rasi"
-  "/usr/share/rofi/themes/rounded-blue.rasi"
-  "/usr/share/rofi/themes/rounded-orange.rasi"
-  "/usr/share/rofi/themes/rounded-retro.rasi"
-  "/usr/share/rofi/themes/rounded-kirby.rasi"
-  "/usr/share/rofi/themes/rounded-white.rasi"
-  "/usr/share/rofi/themes/rounded-winter.rasi"
-  "/usr/share/rofi/themes/rounded-green.rasi"
-  "/usr/share/rofi/themes/rounded-destiny.rasi"
-  "/usr/share/rofi/themes/rounded-pink-darkmode.rasi"
+  "rounded-beige.rasi"
+  "rounded-dark.rasi"
+  "rounded-pink.rasi"
+  "rounded-blue.rasi"
+  "rounded-orange.rasi"
+  "rounded-retro.rasi"
+  "rounded-kirby.rasi"
+  "rounded-white.rasi"
+  "rounded-winter.rasi"
+  "rounded-green.rasi"
+  "rounded-destiny.rasi"
+  "rounded-pink-darkmode.rasi"
 )
 waybar_colors=("#d8c8b3" "#888888" "#f0a0c0" "#a1cdf3" "#fed79d" "#d8c8b3" "#fdcbe6" "#FB443C" "#FDE094" "#8c9180" "#C0884B" "#f0a0c1")
 
