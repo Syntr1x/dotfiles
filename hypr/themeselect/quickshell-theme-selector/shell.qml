@@ -7,7 +7,7 @@ import QtQuick.Layouts
 ShellRoot {
     id: root
 
-    // Theme data (mirrors themeselect.sh) 
+    // ── Theme data (mirrors themeselect.sh) ──
     property var themes: ["syn-beige","syn-Broadcast","syn-mellow","syn-Ocean","IC_Orange_PPL","Gruvbox","syn-rose-pine","syn-Tango","Tomorrow","syn-green","traffic","syn-mellow-darkmode"]
     property var themeNames: ["Beige","Dark","Purple","Blue","Orange","Gruvbox","Kirby","Moondrop","Winter","Green","Destiny 2","Purple(darkmode)"]
     property var wallpapers: ["Flowers.png","darkPlants.jpg","pinkRose.jpg","bluesky.jpg","TrainPath.png","Arch_retro.png","kirby.jpg","Moondrop_white.jpg","winter.jpg","leaves.jpg","thats_it.jpg","black_oled.jpg"]
@@ -32,6 +32,31 @@ ShellRoot {
     property bool waybarBorder: true
     property string statusMsg: "Select a theme"
     property bool isApplying: false
+    // accent follows selected theme (preview) otherwise current theme falls back
+    property string accentColor: {
+        let idx = root.selectedIdx >= 0 ? root.selectedIdx : root.currentIdx;
+        if (idx >= 0 && idx < root.waybarColors.length) return root.waybarColors[idx];
+        return "#7aa2f7";
+    }
+    // readable text on accent (white for dark accents, dark for light accents like Beige #d8c8b3)
+    property string accentFg: {
+        let c = root.accentColor;
+        if (!c || c.length < 7) return "white";
+        let r = parseInt(c.slice(1,3),16)/255, g = parseInt(c.slice(3,5),16)/255, b = parseInt(c.slice(5,7),16)/255;
+        let l = 0.2126*r + 0.7152*g + 0.0722*b; // relative luminance
+        return l > 0.58 ? "#121214" : "white";
+    }
+
+    property color windowBg: Qt.tint("#1a1a1e", Qt.alpha(root.accentColor, 0.30))
+    property color cardBg: Qt.tint("#23232a", Qt.alpha(root.accentColor, 0.18))
+    property color cardSelectedBg: Qt.tint("#2e2a36", Qt.alpha(root.accentColor, 0.32))
+    property color footerBg: Qt.tint("#24242a", Qt.alpha(root.accentColor, 0.20))
+    property color closeBtnBg: Qt.tint("#23232a", Qt.alpha(root.accentColor, 0.14))
+    property color closeBtnBgHover: Qt.tint("#2e2e36", Qt.alpha(root.accentColor, 0.26))
+    property color subtleBorder: Qt.tint("#2e2e36", Qt.alpha(root.accentColor, 0.28))
+    property color toggleOffBg: Qt.tint("#3a3a42", Qt.alpha(root.accentColor, 0.12))
+    property color toggleOffBorder: Qt.tint("#4a4a52", Qt.alpha(root.accentColor, 0.18))
+    property color mediaPlaceholderBg: Qt.tint("#121214", Qt.alpha(root.accentColor, 0.14))
     property string wallpaperDir: Quickshell.shellPath("../../Wallpapers")
     property string wallpaperFallbackDir: {
         let xdg = Quickshell.env("XDG_CONFIG_HOME");
@@ -64,7 +89,6 @@ ShellRoot {
             if (code===0) {
                 root.currentIdx = root.selectedIdx
                 root.statusMsg = "✓ Applied " + root.themeNames[root.selectedIdx]
-                // brief delay then keep msg
             } else {
                 root.statusMsg = "✗ Failed (code " + code + ")"
             }
@@ -100,7 +124,6 @@ ShellRoot {
             onCleared: quitApp()
         }
 
-        // keyboard
         Item {
             anchors.fill: parent
             focus: true
@@ -112,57 +135,60 @@ ShellRoot {
 
         Rectangle {
             anchors.fill: parent
-            color: "#1a1a1e"
+            color: root.windowBg
             radius: 16
-            border.color: "#2a2a30"
+            border.color: Qt.alpha(root.accentColor, 0.55)
             border.width: 1
+            Behavior on color { ColorAnimation { duration: 350; easing.type: Easing.OutCubic } }
+            Behavior on border.color { ColorAnimation { duration: 300 } }
 
             ColumnLayout {
                 anchors.fill: parent
                 anchors.margins: 18
                 spacing: 14
 
-                // ── Header ──
                 RowLayout {
                     Layout.fillWidth: true
                     spacing: 12
                     ColumnLayout {
                         spacing: 4
-                        Text { text: "THEME SELECTOR"; color: "#e8e8eb"; font.pixelSize: 18; font.bold: true; font.family: "Fira Sans" }
+                        Text { text: "THEME SELECTOR"; color: root.accentColor; font.pixelSize: 18; font.bold: true; font.family: "Fira Sans"
+                            Behavior on color { ColorAnimation { duration: 250 } } }
                         Text { text: root.statusMsg; color: root.statusMsg.startsWith("✓") ? "#98c379" : root.statusMsg.startsWith("✗") ? "#e06c75" : "#a0a0a8"; font.pixelSize: 12; font.family: "Fira Sans"; elide: Text.ElideRight; Layout.maximumWidth: 760 }
                     }
                     Item { Layout.fillWidth: true }
-                    // waybar border toggle
                     RowLayout {
                         spacing: 8
                         Text { text: "Waybar border"; color: "#a0a0a8"; font.pixelSize: 12; font.family: "Fira Sans" }
                         Rectangle {
                             width: 44; height: 24; radius: 12
-                            color: root.waybarBorder ? "#7aa2f7" : "#3a3a42"
-                            border.color: root.waybarBorder ? "#7aa2f7" : "#4a4a52"; border.width: 1
+                            color: root.waybarBorder ? root.accentColor : root.toggleOffBg
+                            border.color: root.waybarBorder ? root.accentColor : root.toggleOffBorder; border.width: 1
+                            Behavior on color { ColorAnimation { duration: 250; easing.type: Easing.OutCubic } }
+                            Behavior on border.color { ColorAnimation { duration: 250 } }
                             Rectangle { width: 18; height: 18; radius: 9; color: "white"; anchors.verticalCenter: parent.verticalCenter; x: root.waybarBorder ? 22 : 4
                                 Behavior on x { NumberAnimation{ duration:150; easing.type:Easing.OutCubic } }
                             }
                             MouseArea { anchors.fill: parent; onClicked: root.waybarBorder = !root.waybarBorder; cursorShape: Qt.PointingHandCursor }
                         }
                     }
-                    // close button
                     Rectangle {
-                        width: 36; height: 36; radius: 10; color: closeMa.containsMouse ? "#2e2e36" : "#24242a"; border.color: "#33333a"; border.width: 1
+                        width: 36; height: 36; radius: 10; color: closeMa.containsMouse ? root.closeBtnBgHover : root.closeBtnBg; border.color: root.subtleBorder; border.width: 1
+                        Behavior on color { ColorAnimation { duration: 200 } }
+                        Behavior on border.color { ColorAnimation { duration: 250 } }
                         Text { anchors.centerIn: parent; text: "✕"; color: "#a0a0a8"; font.pixelSize: 14 }
                         MouseArea { id: closeMa; anchors.fill: parent; hoverEnabled:true; cursorShape: Qt.PointingHandCursor; onClicked: quitApp() }
                     }
                 }
 
-                // current + count
                 RowLayout {
                     Layout.fillWidth: true
-                    Text { text: root.currentIdx>=0 ? "Current: " + root.themeNames[root.currentIdx] : "Current: —"; color: "#7aa2f7"; font.pixelSize: 11; font.family: "Fira Sans" }
+                    Text { text: root.currentIdx>=0 ? "Current: " + root.themeNames[root.currentIdx] : "Current: —"; color: root.accentColor; font.pixelSize: 11; font.family: "Fira Sans"
+                        Behavior on color { ColorAnimation { duration: 250 } } }
                     Item { Layout.fillWidth: true }
                     Text { text: root.selectedIdx>=0 ? "Selected: " + root.themeNames[root.selectedIdx] : "Click a card to select"; color: root.selectedIdx>=0 ? "#c0c0c8" : "#6a6a70"; font.pixelSize: 11; font.family: "Fira Sans" }
                 }
 
-                // ── Grid ──
                 GridLayout {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
@@ -171,21 +197,22 @@ ShellRoot {
                     columnSpacing: 12
 
                     Repeater {
-                        model: 12
+                        model: root.themes.length
                         delegate: Rectangle {
                             required property int index
                             Layout.fillWidth: true
                             Layout.fillHeight: true
                             Layout.preferredHeight: 148
                             radius: 14
-                            color: root.selectedIdx===index ? "#24243a" : "#23232a"
-                            border.color: root.selectedIdx===index ? root.waybarColors[index] : (root.currentIdx===index ? "#5a5a66" : "#2e2e36")
+                            color: root.selectedIdx===index ? root.cardSelectedBg : root.cardBg
+                            border.color: root.selectedIdx===index ? root.waybarColors[index] : (root.currentIdx===index ? Qt.alpha(root.accentColor, 0.52) : root.subtleBorder)
                             border.width: root.selectedIdx===index ? 2 : 1
+                            Behavior on color { ColorAnimation { duration: 300; easing.type: Easing.OutCubic } }
+                            Behavior on border.color { ColorAnimation { duration: 250 } }
 
-                            // subtle glow for current
                             Rectangle {
                                 anchors.fill: parent; radius: 14; color: "transparent"
-                                border.color: root.currentIdx===index && root.selectedIdx!==index ? "#3a3a46" : "transparent"
+                                border.color: root.currentIdx===index && root.selectedIdx!==index ? Qt.alpha(root.accentColor, 0.24) : "transparent"
                                 border.width: 1; visible: root.currentIdx===index && root.selectedIdx!==index
                             }
 
@@ -194,10 +221,10 @@ ShellRoot {
                                 anchors.margins: 8
                                 spacing: 6
 
-                                // wallpaper image
                                 Rectangle {
                                     Layout.fillWidth: true; Layout.fillHeight: true
-                                    radius: 10; color: "#121214"; clip: true
+                                    radius: 10; color: root.mediaPlaceholderBg; clip: true
+                                    Behavior on color { ColorAnimation { duration: 300 } }
                                     Image {
                                         id: wpImg
                                         anchors.fill: parent
@@ -211,11 +238,9 @@ ShellRoot {
                                                 if (source.toString() !== fb) source = fb;
                                                 else console.log("Wallpaper missing: " + root.wallpapers[index] + " tried " + root.wallpaperDir + " and " + root.wallpaperFallbackDir);
                                             } else if (status === Image.Ready) {
-                                                // loaded ok
                                             }
                                         }
                                     }
-                                    // subtle placeholder when still broken
                                     Text {
                                         visible: wpImg.status === Image.Error
                                         anchors.centerIn: parent
@@ -224,7 +249,6 @@ ShellRoot {
                                         font.pixelSize: 9
                                         font.family: "Fira Sans"
                                     }
-                                    // top badges
                                     RowLayout {
                                         anchors.top: parent.top; anchors.left: parent.left; anchors.right: parent.right
                                         anchors.margins: 6; spacing: 6
@@ -235,8 +259,8 @@ ShellRoot {
                                         Item { Layout.fillWidth: true }
                                         Rectangle {
                                             visible: root.currentIdx===index
-                                            width: 44; height: 20; radius: 10; color: "#7aa2f7"
-                                            Text { anchors.centerIn: parent; text: "now"; color: "white"; font.pixelSize: 9; font.bold:true; font.family:"Fira Sans" }
+                                            width: 44; height: 20; radius: 10; color: root.accentColor
+                                            Text { anchors.centerIn: parent; text: "now"; color: root.accentFg; font.pixelSize: 9; font.bold:true; font.family:"Fira Sans" }
                                         }
                                         Rectangle {
                                             visible: root.selectedIdx===index
@@ -248,7 +272,6 @@ ShellRoot {
 
                                 Text { text: root.themeNames[index]; color: root.selectedIdx===index ? "white" : "#e8e8eb"; font.pixelSize: 13; font.bold: true; font.family:"Fira Sans"; elide: Text.ElideRight; Layout.fillWidth: true; horizontalAlignment: Text.AlignHCenter }
                                 Text { text: root.themes[index] + "  •  " + root.wallpapers[index]; color: "#7a7a82"; font.pixelSize: 9; font.family:"Fira Sans"; elide: Text.ElideRight; Layout.fillWidth: true; horizontalAlignment: Text.AlignHCenter }
-                                // rofi + wallpaper color dots
                                 RowLayout {
                                     Layout.alignment: Qt.AlignHCenter; spacing: 6
                                     Rectangle { width:10; height:10; radius:5; color: root.waybarColors[index]; border.color:"#00000066"; border.width:1 }
@@ -265,27 +288,31 @@ ShellRoot {
                     }
                 }
 
-                // ── Footer ──
                 RowLayout {
                     Layout.fillWidth: true; spacing: 10
                     Rectangle {
-                        Layout.fillWidth: true; height: 42; radius: 10; color: "#24242a"; border.color: "#2e2e36"; border.width: 1
+                        Layout.fillWidth: true; height: 42; radius: 10; color: root.footerBg; border.color: root.subtleBorder; border.width: 1
+                        Behavior on color { ColorAnimation { duration: 300 } }
+                        Behavior on border.color { ColorAnimation { duration: 300 } }
                         RowLayout { anchors.fill: parent; anchors.leftMargin: 12; anchors.rightMargin: 12; spacing: 8
                             Text { text: "↩ Esc to close  •  ⏎ to apply  •  Double-click card to apply"; color:"#6a6a70"; font.pixelSize:10; font.family:"Fira Sans"; elide: Text.ElideRight; Layout.fillWidth:true }
                         }
                     }
                     Rectangle {
-                        width: 140; height: 42; radius: 10; color: applyMa.containsMouse ? "#2e2e36" : "#23232a"; border.color:"#33333a"; border.width:1; opacity: root.selectedIdx<0 || root.isApplying ? 0.5 : 1
+                        width: 140; height: 42; radius: 10; color: close2Ma.containsMouse ? root.closeBtnBgHover : root.closeBtnBg; border.color: root.subtleBorder; border.width:1; opacity: root.selectedIdx<0 || root.isApplying ? 0.5 : 1
+                        Behavior on color { ColorAnimation { duration: 200 } }
                         Text { anchors.centerIn: parent; text: root.isApplying ? "Applying…" : "Close"; color:"#a0a0a8"; font.pixelSize:13; font.family:"Fira Sans"; font.bold:true }
                         MouseArea { id: close2Ma; anchors.fill: parent; hoverEnabled:true; cursorShape: Qt.PointingHandCursor; onClicked: quitApp() }
                     }
                     Rectangle {
-                        width: 180; height: 42; radius: 10; color: root.selectedIdx<0 || root.isApplying ? "#3a3a42" : "#7aa2f7"
-                        border.color: root.selectedIdx<0 ? "#3a3a42" : "#7aa2f7"; border.width:1
+                        width: 180; height: 42; radius: 10; color: root.selectedIdx<0 || root.isApplying ? root.toggleOffBg : root.accentColor
+                        border.color: root.selectedIdx<0 ? root.toggleOffBorder : root.accentColor; border.width:1
                         opacity: root.selectedIdx<0 || root.isApplying ? 0.6 : 1
+                        Behavior on color { ColorAnimation { duration: 250; easing.type: Easing.OutCubic } }
+                        Behavior on border.color { ColorAnimation { duration: 250 } }
                         RowLayout { anchors.centerIn: parent; spacing:6
-                            Text { text: root.isApplying ? "◌" : "✓"; color: root.selectedIdx<0 ? "#6a6a70" : "white"; font.pixelSize:13; font.bold:true }
-                            Text { text: root.isApplying ? "Working…" : "Apply Full Theme"; color: root.selectedIdx<0 ? "#6a6a70" : "white"; font.pixelSize:13; font.family:"Fira Sans"; font.bold:true }
+                            Text { text: root.isApplying ? "◌" : "✓"; color: root.selectedIdx<0 ? "#6a6a70" : root.accentFg; font.pixelSize:13; font.bold:true }
+                            Text { text: root.isApplying ? "Working…" : "Apply Full Theme"; color: root.selectedIdx<0 ? "#6a6a70" : root.accentFg; font.pixelSize:13; font.family:"Fira Sans"; font.bold:true }
                         }
                         MouseArea {
                             id: applyMa; anchors.fill: parent; hoverEnabled:true; cursorShape: root.selectedIdx<0 ? Qt.ArrowCursor : Qt.PointingHandCursor; enabled: root.selectedIdx>=0 && !root.isApplying
