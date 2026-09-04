@@ -10,6 +10,9 @@ Uses some files from:
 - newmanls (https://github.com/newmanls/rofi-themes-collection?tab=readme-ov-file)
   > &#8593; changed colors of rounded themes to match the wallpapers.
 
+- uiriansan (https://github.com/uiriansan/SilentSDDM)
+  > &#8593; sddm launcher setup with my added wallpapers to fit theme.
+
 Be aware:
 
 - The script is written with the assistance of an LLM.
