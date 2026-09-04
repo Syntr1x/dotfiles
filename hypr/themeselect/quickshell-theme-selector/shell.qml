@@ -7,7 +7,6 @@ import QtQuick.Layouts
 ShellRoot {
     id: root
 
-    // ── Theme data (mirrors themeselect.sh) ──
     property var themes: ["syn-beige","syn-Broadcast","syn-mellow","syn-Ocean","IC_Orange_PPL","Gruvbox","syn-rose-pine","syn-Tango","Tomorrow","syn-green","traffic","syn-mellow-darkmode"]
     property var themeNames: ["Beige","Dark","Purple","Blue","Orange","Gruvbox","Kirby","Moondrop","Winter","Green","Destiny 2","Purple(darkmode)"]
     property var wallpapers: ["Flowers.png","darkPlants.jpg","pinkRose.jpg","bluesky.jpg","TrainPath.png","Arch_retro.png","kirby.jpg","Moondrop_white.jpg","winter.jpg","leaves.jpg","thats_it.jpg","black_oled.jpg"]
