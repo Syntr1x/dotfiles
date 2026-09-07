@@ -11,9 +11,6 @@
     "modules-left": [
         "custom/appmenu",
         "group/quicklinks",
-        "custom/media1",
-        "custom/media2",
-        "custom/media3",
         "hyprland/window"
     ],
     "modules-center": [
