@@ -150,11 +150,6 @@ window#waybar.empty #window {
     background: @module-bg-hover;
 }
 
-#custom-media1, #custom-media2, #custom-media3 {
-    font-size: 17px;
-    padding: 3px 8px;
-}
-
 #custom-exit {
     margin: 4px 3px;
     padding: 3px 12px;
