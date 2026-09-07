@@ -49,7 +49,7 @@ ShellRoot {
                 right: true
             }
             margins {
-                top: 52
+                top: 64
             }
 
             exclusionMode: ExclusionMode.Ignore
