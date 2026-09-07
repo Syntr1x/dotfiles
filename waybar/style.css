@@ -110,9 +110,6 @@ window#waybar.empty #window {
 }
 
 #custom-appmenu,
-#custom-media1,
-#custom-media2,
-#custom-media3,
 #idle_inhibitor,
 #clock,
 #pulseaudio,
@@ -133,9 +130,6 @@ window#waybar.empty #window {
 }
 
 #custom-appmenu:hover,
-#custom-media1:hover,
-#custom-media2:hover,
-#custom-media3:hover,
 #idle_inhibitor:hover,
 #clock:hover,
 #pulseaudio:hover,
@@ -159,12 +153,6 @@ window#waybar.empty #window {
 #custom-media1, #custom-media2, #custom-media3 {
     font-size: 17px;
     padding: 3px 8px;
-}
-
-#custom-media1:hover,
-#custom-media2:hover,
-#custom-media3:hover {
-    color: @text;
 }
 
 #custom-exit {
@@ -276,7 +264,8 @@ label:focus {
 
 #custom-quicklink1,
 #custom-quicklink2,
-#custom-quicklink3 {
+#custom-quicklink3,
+#custom-quicklink4 {
     padding: 3px 8px;
     margin: 4px 2px;
     font-size: 17px;
@@ -288,7 +277,8 @@ label:focus {
 
 #custom-quicklink1:hover,
 #custom-quicklink2:hover,
-#custom-quicklink3:hover {
+#custom-quicklink3:hover,
+#custom-quicklink4:hover {
     color: @text;
     background: @module-bg-hover;
 }
