@@ -74,8 +74,7 @@ ShellRoot {
                 MediaCard {
                     id: card
                     anchors.top: parent.top
-                    anchors.left: parent.left
-                    anchors.leftMargin: 10
+                    anchors.horizontalCenter: parent.horizontalCenter
                     accent: root.accentColor
                     accentFg: root.accentFg
                 }
