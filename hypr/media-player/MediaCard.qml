@@ -329,7 +329,7 @@ Item {
                 Text {
                     anchors.centerIn: parent
                     anchors.horizontalCenterOffset: (root.isPlaying ? 0 : 1)
-                    text: root.isPlaying ? "󰏤" : "󰐊"
+                    text: root.isPlaying ? "\uf04c" : "\uf04b"
                     font.family: "Firacode Nerd Font, Fira Sans Semibold, sans-serif"
                     font.pixelSize: 21
                     color: root.accentFg
