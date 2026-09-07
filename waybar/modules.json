@@ -27,7 +27,7 @@
         "separate-outputs": true
     },
 
-    // Rofi Application Launcher
+    // Themeselector
     "custom/appmenu": {
         "format": "  Theme",
         "on-click": "/usr/bin/qs -p /home/$USER/.config/hypr/themeselector/shell.qml",
