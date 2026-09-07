@@ -34,23 +34,6 @@
         "tooltip": false
     },
 
-    // Media Control
-    "custom/media1": {
-        "format": "󰒮",
-        "on-click": "playerctl previous",
-        "tooltip": false
-    },
-    "custom/media2": {
-        "format": "󰐊",
-        "on-click": "playerctl play-pause",
-        "tooltip": false
-    },
-    "custom/media3": {
-        "format": "󰒭",
-        "on-click": "playerctl next",
-        "tooltip": false
-    },
-
     // Power Menu
     "custom/exit": {
         "format": "",
