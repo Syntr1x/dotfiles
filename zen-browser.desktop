@@ -1,7 +1,7 @@
 [Desktop Entry]
 Name=Zen Browser
 Comment=Run Zen browser
-Exec=/home/$USER/zen/zen
+Exec=/home/$USER/zen-browser/zen/zen
 Terminal=false
 Type=Application
 Categories=Utility;
