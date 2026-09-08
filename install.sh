@@ -32,6 +32,7 @@ copy_configs() {
   sudo cp /home/$USER/tempconf/.bashrc /home/$USER/
   sudo cp /home/$USER/tempconf/themeselector.desktop /usr/share/applications/
   sudo cp /home/$USER/tempconf/zen-browser.desktop /usr/share/applications/
+  sudo sed -i "s|\$USER|$USER|g" /usr/share/applications/zen-browser.desktop
   sudo cp /home/$USER/tempconf/defaultsyn.conf /usr/share/sddm/themes/silent/configs/ 2>/dev/null
   sudo cp /home/$USER/tempconf/hypr/Wallpapers/* /usr/share/sddm/themes/silent/backgrounds/ 2>/dev/null
   sudo chown -R "$USER":"$USER" /usr/share/sddm/themes/silent/configs/
