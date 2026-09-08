@@ -33,6 +33,7 @@ copy_configs() {
   sudo cp /home/$USER/tempconf/themeselector.desktop /usr/share/applications/
   sudo cp /home/$USER/tempconf/defaultsyn.conf /usr/share/sddm/themes/silent/configs/ 2>/dev/null
   sudo cp /home/$USER/tempconf/hypr/Wallpapers/* /usr/share/sddm/themes/silent/backgrounds/ 2>/dev/null
+  sudo chown admin:wheel /usr/share/sddm/themes/silent/configs/
   sudo find ~/.config/{ghostty,hypr,waybar,rofi} -type d -exec chown "$USER":"$USER" {} +
 }
 
@@ -99,7 +100,7 @@ reflector_mirrorlist
 
 # Run theme selection script
 echo "Running theme selection script..."
-/home/$USER/.config/hypr/scripts/themeselect.sh
+qs -p "$HOME/.config/hypr/themeselector/shell.qml"
 
 echo "Cleaning up..."; sudo rm -rf /home/$USER/hyprconf.syn /home/$USER/tempconf /home/$USER/.config/install.sh /home/$USER/.config/README.md /home/$USER/.config/LICENSE /home/$USER/.config/Ghostty-themes /home/$USER/.config/Rofi-themes /home/$USER/.config/themeselector.desktop
 echo "Installation complete. Please restart your session."
