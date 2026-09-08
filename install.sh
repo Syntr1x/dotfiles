@@ -33,7 +33,7 @@ copy_configs() {
   sudo cp /home/$USER/tempconf/themeselector.desktop /usr/share/applications/
   sudo cp /home/$USER/tempconf/defaultsyn.conf /usr/share/sddm/themes/silent/configs/ 2>/dev/null
   sudo cp /home/$USER/tempconf/hypr/Wallpapers/* /usr/share/sddm/themes/silent/backgrounds/ 2>/dev/null
-  sudo chown admin:wheel /usr/share/sddm/themes/silent/configs/
+  sudo chown -R $USER:$USER /usr/share/sddm/themes/silent/configs/
   sudo find ~/.config/{ghostty,hypr,waybar,rofi} -type d -exec chown "$USER":"$USER" {} +
 }
 
