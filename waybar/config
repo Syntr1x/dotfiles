@@ -14,7 +14,8 @@
         "hyprland/window"
     ],
     "modules-center": [
-        "hyprland/workspaces"
+        "hyprland/workspaces",
+        "custom/media1"
     ],
     "modules-right": [
         "pulseaudio", 
