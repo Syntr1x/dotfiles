@@ -1,12 +1,11 @@
-//@ pragma UseQApplication
-// One-shot drun launcher: `qs -p ~/.config/quickshell/launcher/shell.qml`
-// (SUPER+R). Centered card, live accent from quickshell/accent.conf.
-// Enter = launch, Ctrl+Enter = run raw command, Esc/click-outside = close.
+// (SUPER+R)
+// Enter = launch, Esc/click-outside = close.
 import Quickshell
 import Quickshell.Io
 import Quickshell.Hyprland
 import QtQuick
 import QtQuick.Layouts
+import QtQuick.Controls
 
 ShellRoot {
     id: root
@@ -17,6 +16,106 @@ ShellRoot {
     property var filtered: []
 
     property var terminalEmulator: ["ghostty", "-e"]
+
+    // Rofi-style frecency history: { "<desktop-id>": { c: launchCount, l: lastUseUnixSec } }
+    property var history: ({})
+    property string historyDir: {
+        var s = Quickshell.env("XDG_STATE_HOME");
+        if (!s || s === "") s = (Quickshell.env("HOME") || "") + "/.local/state";
+        return s + "/quickshell";
+    }
+    property string historyPath: root.historyDir + "/launcher-history.json"
+    property FileView historyFile: FileView {
+        path: root.historyPath
+        watchChanges: false
+        blockLoading: true
+        blockWrites: true
+        printErrors: false
+    }
+
+    function historyKey(e) {
+        if (!e) return "";
+        return e.id || e.execString || e.name || "";
+    }
+
+    function frecency(e) {
+        var k = root.historyKey(e);
+        if (k === "") return 0;
+        var h = root.history[k];
+        if (!h) return 0;
+        var countScore = Math.min((h.c || 0) * 2, 20);
+        var age = Math.floor(Date.now() / 1000) - (h.l || 0);
+        var recency = 0;
+        if (age < 3600) recency = 15;
+        else if (age < 86400) recency = 10;
+        else if (age < 7 * 86400) recency = 5;
+        else if (age < 30 * 86400) recency = 2;
+        return countScore + recency;
+    }
+
+    function loadHistory() {
+        var parsed = {};
+        try {
+            var txt = root.historyFile.text();
+            if (txt && txt.trim() !== "") {
+                var obj = JSON.parse(txt);
+                if (obj && typeof obj === "object") parsed = obj;
+            }
+        } catch (err) { parsed = {}; }
+        // Sanitize: drop entries for uninstalled apps — but only when we
+        // actually have an app list. DesktopEntries loads async and can
+        // still be empty at startup; pruning then would wipe all history.
+        var known = {};
+        var apps = root.allApps();
+        var hasApps = apps.length > 0;
+        for (var i = 0; i < apps.length; i++) known[root.historyKey(apps[i])] = true;
+        var clean = {}, keys = Object.keys(parsed);
+        for (var j = 0; j < keys.length; j++) {
+            var v = parsed[keys[j]];
+            if (hasApps && !known[keys[j]]) continue;
+            if (!v || typeof v.c !== "number") continue;
+            clean[keys[j]] = { c: Math.max(0, Math.min(v.c, 10000)), l: (typeof v.l === "number") ? v.l : 0 };
+        }
+        root.history = clean;
+    }
+
+    function saveHistory() {
+        try {
+            var keys = Object.keys(root.history);
+            if (keys.length > 150) {
+                var scored = [];
+                for (var i = 0; i < keys.length; i++) {
+                    var h = root.history[keys[i]];
+                    scored.push([(h.c || 0) * 10000000000 + (h.l || 0), keys[i]]);
+                }
+                scored.sort(function(a, b) { return b[0] - a[0]; });
+                var trimmed = {};
+                for (var j = 0; j < 150; j++) trimmed[scored[j][1]] = root.history[scored[j][1]];
+                root.history = trimmed;
+            }
+            root.historyFile.setText(JSON.stringify(root.history));
+        } catch (err) {}
+    }
+
+    function recordLaunch(e) {
+        try {
+            var k = root.historyKey(e);
+            if (k === "") return;
+            var h = root.history[k] || { c: 0, l: 0 };
+            h.c = (h.c || 0) + 1;
+            h.l = Math.floor(Date.now() / 1000);
+            var nh = {};
+            for (var key in root.history) nh[key] = root.history[key];
+            nh[k] = h;
+            root.history = nh;
+            root.saveHistory();
+        } catch (err) {}
+    }
+
+    function stepSelection(d) {
+        if (root.filtered.length === 0) return;
+        root.selected = Math.max(0, Math.min(root.selected + d, root.filtered.length - 1));
+    }
 
     function allApps() {
         if (typeof DesktopEntries === "undefined" || !DesktopEntries.applications) return [];
@@ -61,15 +160,38 @@ ShellRoot {
 
     function refilter() {
         var q = root.query.trim().toLowerCase();
-        var apps = allApps(), scored = [];
-        for (var i = 0; i < apps.length; i++) {
-            var s = root.score(apps[i], q);
-            if (s >= 0) scored.push([s, apps[i]]);
+        var apps = allApps();
+        if (q === "") {
+            // Recents first (frecency desc), then the rest alphabetically.
+            var recent = [];
+            for (var i = 0; i < apps.length; i++) {
+                recent.push([root.frecency(apps[i]), (apps[i].name || "").toLowerCase(), apps[i]]);
+            }
+            recent.sort(function(a, b) {
+                if (b[0] !== a[0]) return b[0] - a[0];
+                if (a[1] < b[1]) return -1;
+                if (a[1] > b[1]) return 1;
+                return 0;
+            });
+            var out = [];
+            for (var j = 0; j < recent.length && j < 60; j++) out.push(recent[j][2]);
+            root.filtered = out;
+            root.selected = 0;
+            return;
+        }
+        var scored = [];
+        for (var k = 0; k < apps.length; k++) {
+            var s = root.score(apps[k], q);
+            if (s < 0) continue;
+            // Small frecency tie-break so often-used matches float up
+            // without beating clearly better text matches (max +12).
+            s += Math.min(root.frecency(apps[k]), 24) * 0.5;
+            scored.push([s, apps[k]]);
         }
         scored.sort(function(a, b) { return b[0] - a[0]; });
-        var out = [];
-        for (var j = 0; j < scored.length && j < 60; j++) out.push(scored[j][1]);
-        root.filtered = out;
+        var out2 = [];
+        for (var m = 0; m < scored.length && m < 60; m++) out2.push(scored[m][1]);
+        root.filtered = out2;
         root.selected = 0;
     }
 
@@ -81,13 +203,7 @@ ShellRoot {
         if (!e) return;
         if (e.runInTerminal) {
             var cmd = (e.command && e.command.length > 0) ? e.command : ["sh", "-c", e.execString];
-            // Honour Path= from the .desktop file. Quickshell exposes it as
-            // workingDirectory; execDetached does NOT pick it up automatically,
-            // so it must be passed explicitly (both as ghostty's CWD and via cd,
-            // since -e children inherit the terminal's CWD).
             var workdir = (e.workingDirectory && e.workingDirectory !== "") ? e.workingDirectory : null;
-            // Build an argv-accurate shell invocation, wrapped so a crash no
-            // longer flashes ghostty shut: non-zero exits wait for Enter.
             var inner = "";
             for (var i = 0; i < cmd.length; i++) {
                 if (i > 0) inner += " ";
@@ -103,21 +219,26 @@ ShellRoot {
         }
     }
 
-    function launchCurrent(asRun) {
-        if (asRun || root.filtered.length === 0) {
-            var cmd = root.query.trim();
-            if (cmd !== "") Quickshell.execDetached(["sh", "-c", cmd]);
-        } else {
-            root.launchEntry(root.filtered[Math.min(root.selected, root.filtered.length - 1)]);
+    function launchCurrent() {
+        if (root.filtered.length === 0) {
+            Qt.quit();
+            return;
         }
+        var entry = root.filtered[Math.min(root.selected, root.filtered.length - 1)];
+        root.recordLaunch(entry);
+        root.launchEntry(entry);
         Qt.quit();
     }
 
-    Component.onCompleted: refilter()
+    Component.onCompleted: {
+        Quickshell.execDetached(["mkdir", "-p", root.historyDir]);
+        root.loadHistory();
+        root.refilter();
+    }
 
     Connections {
         target: DesktopEntries
-        function onApplicationsChanged() { root.refilter(); }
+        function onApplicationsChanged() { root.loadHistory(); root.refilter(); }
     }
 
     Timer {
@@ -152,9 +273,13 @@ ShellRoot {
             anchors.fill: parent
             Keys.onPressed: e => {
                 if (e.key === Qt.Key_Escape) { Qt.quit(); e.accepted = true; }
-                else if (e.key === Qt.Key_Down) { root.selected = Math.min(root.selected + 1, root.filtered.length - 1); e.accepted = true; }
-                else if (e.key === Qt.Key_Up) { root.selected = Math.max(root.selected - 1, 0); e.accepted = true; }
-                else if (e.key === Qt.Key_Return || e.key === Qt.Key_Enter) { root.launchCurrent(e.modifiers & Qt.ControlModifier); e.accepted = true; }
+                else if (e.key === Qt.Key_Down) { root.stepSelection(1); e.accepted = true; }
+                else if (e.key === Qt.Key_Up) { root.stepSelection(-1); e.accepted = true; }
+                else if (e.key === Qt.Key_PageDown) { root.stepSelection(8); e.accepted = true; }
+                else if (e.key === Qt.Key_PageUp) { root.stepSelection(-8); e.accepted = true; }
+                else if (e.key === Qt.Key_Home) { root.selected = 0; e.accepted = true; }
+                else if (e.key === Qt.Key_End) { root.selected = Math.max(0, root.filtered.length - 1); e.accepted = true; }
+                else if (e.key === Qt.Key_Return || e.key === Qt.Key_Enter) { root.launchCurrent(); e.accepted = true; }
             }
         }
 
@@ -172,14 +297,6 @@ ShellRoot {
                 anchors.fill: parent
                 anchors.margins: 14
                 spacing: 10
-
-                Text {
-                    Layout.fillWidth: true
-                    text: "  LAUNCH"
-                    color: root.theme.accent
-                    font.family: root.theme.fontFam; font.pixelSize: 13; font.bold: true
-                    leftPadding: 4
-                }
 
                 Rectangle {
                     Layout.fillWidth: true; Layout.preferredHeight: 50; radius: 10
@@ -199,9 +316,13 @@ ShellRoot {
                             onTextChanged: { root.query = text; root.refilter(); }
                             onActiveFocusChanged: { if (!activeFocus) focusTimer.running = true; }
                             Keys.onPressed: e => {
-                                if (e.key === Qt.Key_Down) { root.selected = Math.min(root.selected + 1, root.filtered.length - 1); e.accepted = true; }
-                                else if (e.key === Qt.Key_Up) { root.selected = Math.max(root.selected - 1, 0); e.accepted = true; }
-                                else if (e.key === Qt.Key_Return || e.key === Qt.Key_Enter) { root.launchCurrent(e.modifiers & Qt.ControlModifier); e.accepted = true; }
+                                if (e.key === Qt.Key_Down) { root.stepSelection(1); e.accepted = true; }
+                                else if (e.key === Qt.Key_Up) { root.stepSelection(-1); e.accepted = true; }
+                                else if (e.key === Qt.Key_PageDown) { root.stepSelection(8); e.accepted = true; }
+                                else if (e.key === Qt.Key_PageUp) { root.stepSelection(-8); e.accepted = true; }
+                                else if (e.key === Qt.Key_Home) { root.selected = 0; e.accepted = true; }
+                                else if (e.key === Qt.Key_End) { root.selected = Math.max(0, root.filtered.length - 1); e.accepted = true; }
+                                else if (e.key === Qt.Key_Return || e.key === Qt.Key_Enter) { root.launchCurrent(); e.accepted = true; }
                                 else if (e.key === Qt.Key_Escape) { Qt.quit(); e.accepted = true; }
                             }
                         }
@@ -209,11 +330,17 @@ ShellRoot {
                 }
 
                 ListView {
+                    id: resultList
                     Layout.fillWidth: true; Layout.fillHeight: true
-                    model: root.filtered.slice(0, 8)
+                    model: root.filtered
                     clip: true
                     spacing: 6
-                    highlightFollowsCurrentItem: false
+                    currentIndex: root.selected
+                    flickableDirection: Flickable.VerticalFlick
+                    boundsBehavior: Flickable.StopAtBounds
+                    ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
+                    onCurrentIndexChanged: { if (count > 0 && currentIndex >= 0) positionViewAtIndex(currentIndex, ListView.Contain); }
+                    onCountChanged: { if (count > 0) positionViewAtBeginning(); }
                     delegate: Rectangle {
                         required property var modelData
                         required property int index
@@ -242,14 +369,14 @@ ShellRoot {
                             id: rowHover
                             anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
                             onEntered: root.selected = index
-                            onClicked: { root.selected = index; root.launchCurrent(false); }
+                            onClicked: { root.selected = index; root.launchCurrent(); }
                         }
                     }
                 }
 
                 Text {
                     Layout.fillWidth: true
-                    text: root.filtered.length + " apps  •  Enter launch  •  Ctrl+Enter run  •  Esc close"
+                    text: root.filtered.length + " apps  •  Enter launch  •  Esc close"
                     color: root.theme.textSub; font.family: root.theme.fontFam; font.pixelSize: 10
                     horizontalAlignment: Text.AlignHCenter
                 }
