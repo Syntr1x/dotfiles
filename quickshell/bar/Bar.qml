@@ -210,7 +210,7 @@ Scope {
                     spacing: 6
 
                     Rectangle {
-                        Layout.preferredHeight: 30; radius: 12; color: "transparent"
+                        Layout.preferredHeight: 30; radius: barScope.theme.radius; color: barScope.theme.moduleBg
                         Layout.preferredWidth: wsRow.implicitWidth + 8
                         RowLayout { id: wsRow; anchors.centerIn: parent; spacing: 4
                             Repeater {
@@ -222,7 +222,7 @@ Scope {
                                     property bool isActive: barScope.isFocusedWs(wsId, win.pollActiveWs)
                                     Layout.preferredHeight: 26; Layout.preferredWidth: isActive ? 34 : 28; radius: 9
                                     color: isActive ? barScope.theme.accent : "transparent"
-                                    Text { anchors.centerIn: parent; text: wsId; color: isActive ? barScope.theme.accentFg : barScope.theme.textSub; font.family: barScope.theme.fontFam; font.pixelSize: 13; font.bold: isActive }
+                                    Text { anchors.centerIn: parent; text: wsId; color: isActive ? barScope.theme.accentFg : barScope.theme.textCol; font.family: barScope.theme.fontFam; font.pixelSize: 13; font.bold: isActive }
                                     MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor
                                         onClicked: Hyprland.dispatch("workspace " + wsId) }
                                 }
