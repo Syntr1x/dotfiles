@@ -23,7 +23,7 @@ If you find any obvious problems be sure to reach out!
 sh -c "$(curl -fsSL https://raw.githubusercontent.com/Syntr1x/dotfiles/master/install.sh)"
 ```
 
-##  Preview — 12 themes
+##  Preview - 12 themes
 
 <p align="center">
   <img width="960" alt="themes preview - 12 themes cycling" src="https://github.com/user-attachments/assets/a8a07fd2-da87-46f8-9ed7-4b2e9c47c00c" />
