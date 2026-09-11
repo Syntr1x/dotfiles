@@ -5,8 +5,8 @@ install_Yay() {
 }
 
 install_pacman_packages() {
-  local REQUIRED_PKGS=("waybar" "rofi" "hyprland" "nano" "ghostty" "hyprpaper" "dolphin" "ark" "fastfetch" "btop" "networkmanager" "sddm" "pipewire" "quickshell" "flatpak" "libnotify" "kitty" "wget" "reflector" "dunst" "ttf-nerd-fonts-symbols" "ttf-firacode-nerd" "ttf-jetbrains-mono-nerd" "ttf-font-awesome")
-  for pkg in "${REQUIRED_PKGS[@]}"; do pacman -Q "$pkg" &>/dev/null || sudo pacman -S --noconfirm "$pkg"; done
+  local REQUIRED_PKGS=("hyprland" "nano" "ghostty" "hyprpaper" "dolphin" "ark" "fastfetch" "btop" "networkmanager" "sddm" "pipewire" "pipewire-audio" "pipewire-alsa" "pipewire-pulse" "pipewire-libcamera" "wireplumber" "alsa-utils" "alsa-card-profiles" "sof-firmware" "rtkit" "quickshell" "flatpak" "libnotify" "kitty" "wget" "reflector" "dunst" "ttf-nerd-fonts-symbols" "ttf-firacode-nerd" "ttf-jetbrains-mono-nerd" "ttf-font-awesome" "python" "brightnessctl" "playerctl")
+  for pkg in "${REQUIRED_PKGS[@]}"; do pacman -Q "$pkg" &>/dev/null || sudo pacman -S --needed --noconfirm "$pkg"; done
 }
 
 install_yay_packages() {
@@ -18,16 +18,14 @@ copy_configs() {
   rm -rf /home/$USER/tempconf
   git clone https://github.com/Syntr1x/dotfiles /home/$USER/tempconf
 
-  sudo mkdir -p /usr/share/rofi/themes
   sudo mkdir -p /usr/share/ghostty/themes
   sudo mkdir -p /usr/share/sddm/themes/silent/configs
   sudo mkdir -p /usr/share/sddm/themes/silent/backgrounds
 
   shopt -s dotglob
-  sudo cp -r /home/$USER/tempconf/* /home/$USER/.config/ && sudo chown -R $USER:$USER /home/$USER/.config && find /home/$USER/.config/hypr -type f -name "*.sh" -exec chmod +x {} + 2>/dev/null
+  sudo cp -r /home/$USER/tempconf/* /home/$USER/.config/ && sudo chown -R $USER:$USER /home/$USER/.config && find /home/$USER/.config/{hypr,quickshell} -type f -name "*.sh" -exec chmod +x {} + 2>/dev/null
   shopt -u dotglob
 
-  sudo cp /home/$USER/tempconf/Rofi-themes/*.rasi /usr/share/rofi/themes 2>/dev/null
   sudo cp /home/$USER/tempconf/Ghostty-themes/* /usr/share/ghostty/themes 2>/dev/null
   sudo cp /home/$USER/tempconf/.bashrc /home/$USER/
   sudo cp /home/$USER/tempconf/themeselector.desktop /usr/share/applications/
@@ -36,7 +34,7 @@ copy_configs() {
   sudo cp /home/$USER/tempconf/defaultsyn.conf /usr/share/sddm/themes/silent/configs/ 2>/dev/null
   sudo cp /home/$USER/tempconf/hypr/Wallpapers/* /usr/share/sddm/themes/silent/backgrounds/ 2>/dev/null
   sudo chown -R "$USER":"$USER" /usr/share/sddm/themes/silent/configs/
-  sudo find ~/.config/{ghostty,hypr,waybar,rofi} -type d -exec chown "$USER":"$USER" {} +
+  sudo find ~/.config/{ghostty,hypr,quickshell} -type d -exec chown "$USER":"$USER" {} +
 }
 
 enable_network_manager() {
@@ -63,13 +61,12 @@ EOF
 }
 
 enable_sddm() {
-  sudo systemctl enable --now sddm
+  sudo systemctl enable sddm
 }
 
 enable_pipewire() {
-  sudo systemctl enable --now pipewire
-  sudo systemctl enable --now pipewire-pulse
-  sudo systemctl enable --now wireplumber
+  systemctl --user enable --now pipewire.socket pipewire.service wireplumber.service pipewire-pulse.socket pipewire-pulse.service
+  systemctl --user restart pipewire pipewire-pulse wireplumber
 }
 
 install_Zen() {
@@ -102,7 +99,16 @@ reflector_mirrorlist
 
 # Run theme selection script
 echo "Running theme selection script..."
-qs -p "$HOME/.config/hypr/themeselector/shell.qml"
+qs -p "$HOME/.config/quickshell/themeselector/shell.qml"
 
-echo "Cleaning up..."; sudo rm -rf /home/$USER/hyprconf.syn /home/$USER/tempconf /home/$USER/.config/install.sh /home/$USER/.config/README.md /home/$USER/.config/LICENSE /home/$USER/.config/Ghostty-themes /home/$USER/.config/Rofi-themes /home/$USER/.config/themeselector.desktop
-echo "Installation complete. Please restart your session."
+# Stale pre-quickshell configs (upgrade installs): back up, don't nuke.
+bk="/home/$USER/.config/backup-pre-quickshell-$(date +%Y%m%d-%H%M%S)"
+for d in waybar rofi; do
+  if [ -d "/home/$USER/.config/$d" ]; then
+    mkdir -p "$bk" && mv "/home/$USER/.config/$d" "$bk/" && echo "Backed up old $d to $bk"
+  fi
+done
+[ -d "$bk" ] && chown -R $USER:$USER "$bk" 2>/dev/null || true
+
+echo "Cleaning up..."; sudo rm -rf /home/$USER/hyprconf.syn /home/$USER/tempconf /home/$USER/.config/install.sh /home/$USER/.config/README.md /home/$USER/.config/LICENSE /home/$USER/.config/QUICKSHELL.md /home/$USER/.config/Ghostty-themes /home/$USER/.config/themeselector.desktop /home/$USER/.config/zen-browser.desktop /home/$USER/.config/defaultsyn.conf
+echo "Installation complete. Please reboot to start SDDM and your new session."
