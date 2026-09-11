@@ -17,7 +17,7 @@ hl.monitor({
 ---- AUTOSTART ----
 -------------------
 hl.on("hyprland.start", function()
-    hl.exec_cmd("waybar")
+    hl.exec_cmd("qs")
     hl.exec_cmd("hyprpaper")
     hl.exec_cmd("dunst")
 end)
@@ -127,20 +127,20 @@ hl.config({
 local mainMod = "SUPER"
 
 -- Actions
-hl.bind(mainMod .. " + W", hl.dsp.exec_cmd("killall -SIGUSR1 waybar"))
+hl.bind(mainMod .. " + W", hl.dsp.exec_cmd("~/.config/quickshell/toggle-bar.sh"))
 hl.bind(mainMod .. " + Q", hl.dsp.exec_cmd("ghostty"))
 hl.bind(mainMod .. " + C", hl.dsp.window.close())
 hl.bind(mainMod .. " + M", hl.dsp.exit())
 hl.bind(mainMod .. " + E", hl.dsp.exec_cmd("dolphin"))
 hl.bind(mainMod .. " + T", hl.dsp.window.float({ action = "toggle" }))
 hl.bind(mainMod .. " + F", hl.dsp.window.fullscreen({ action = "toggle" }))
-hl.bind(mainMod .. " + R", hl.dsp.exec_cmd("rofi -show drun"))
+hl.bind(mainMod .. " + R", hl.dsp.exec_cmd("~/.config/quickshell/launcher.sh"))
 hl.bind(mainMod .. " + P", hl.dsp.window.pseudo({ action = "toggle" }))
 hl.bind(mainMod .. " + J", hl.dsp.layout("togglesplit"))
-hl.bind(mainMod .. " + B", hl.dsp.exec_cmd("/home/$USER/zen-browser/zen/zen"))
-hl.bind(mainMod .. " + SHIFT + B", hl.dsp.exec_cmd("~/.config/hypr/scripts/reload-waybar.sh"))
+hl.bind(mainMod .. " + B",           hl.dsp.exec_cmd("~/zen-browser/zen/zen"))
+hl.bind(mainMod .. " + SHIFT + B", hl.dsp.exec_cmd("~/.config/quickshell/reload.sh"))
 hl.bind(mainMod .. " + SHIFT + W", hl.dsp.exec_cmd("~/.config/hypr/scripts/reload-hyprpaper.sh"))
-hl.bind(mainMod .. " + SHIFT + R", hl.dsp.exec_cmd("killall rofi"))
+hl.bind(mainMod .. " + SHIFT + R", hl.dsp.exec_cmd("qs kill -p ~/.config/quickshell/launcher/shell.qml"))
 hl.bind(mainMod .. " + D", hl.dsp.exec_cmd("tidal-hifi"))
 hl.bind(mainMod .. " + S", hl.dsp.exec_cmd("steam"))
 hl.bind(mainMod .. " + V", hl.dsp.exec_cmd("vesktop"))
