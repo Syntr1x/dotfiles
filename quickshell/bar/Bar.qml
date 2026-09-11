@@ -518,6 +518,7 @@ Scope {
             var p = mouseArea.mapToItem(win.contentItem, mouseArea.width / 2, mouseArea.height);
             item.display(win, Math.round(p.x), Math.round(p.y));
         } catch (e) {
+            console.warn("tray menu failed for", item && (item.id || item.title), e);
             try { item.secondaryActivate(); } catch (e2) {}
         }
     }
