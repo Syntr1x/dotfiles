@@ -12,7 +12,7 @@ Uses some files from:
 
 Be aware:
 
-- The script is written with the assistance of an LLM.
+- The script and most of the QS is written with the assistance of an LLM (currently muse 1.3).
 
 - I'm a beginner in this sort of stuff so it's not optimized or anything.
 
