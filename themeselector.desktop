@@ -1,7 +1,7 @@
 [Desktop Entry]
 Name=Theme-selector
 Comment=Run my custom bash script
-Exec=sh -c 'exec qs -p "$HOME/.config/hypr/themeselector/shell.qml"'
+Exec=sh -c 'exec qs -p "$HOME/.config/quickshell/themeselector/shell.qml"'
 Icon=utilities-terminal
 Terminal=false
 Type=Application
