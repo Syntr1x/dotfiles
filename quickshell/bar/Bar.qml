@@ -48,7 +48,10 @@ Scope {
     }
 
     // Sorted workspace ids, 1-5 always present.
-    // Live IPC first (currently empty on Hyprland 0.56 here), poll fallback.
+    // Live IPC first, poll fallback. Re-tested on Hyprland 0.56.2 +
+    // quickshell 0.3.1: Hyprland.workspaces still exposes no count
+    // (even after refreshWorkspaces()), so the live path yields
+    // nothing and the hyprctl poll below is required.
     function workspaceIds(pollIds) {
         var ids = {};
         var i;
@@ -72,6 +75,18 @@ Scope {
             if (Hyprland.focusedWorkspace) return Hyprland.focusedWorkspace.id === id;
         } catch (e) {}
         return pollActive === id;
+    }
+    // Workspace switching must respect Hyprland's config provider:
+    // with configProvider: lua (default since 0.55) the legacy
+    // "workspace N" syntax is rejected, dispatch Lua instead.
+    function dispatchWorkspace(id) {
+        try {
+            if (Hyprland.usingLua) {
+                Hyprland.dispatch('hl.dsp.focus({ workspace = "' + id + '" })');
+                return;
+            }
+        } catch (e) {}
+        Hyprland.dispatch("workspace " + id);
     }
 
     Variants {
@@ -99,9 +114,10 @@ Scope {
             property bool volPollMuted: false
             // live title: event-driven via Hyprland IPC (instant on focus
             // change AND in-window title change, e.g. browser tabs).
-            // Falls back to hyprctl polling: this compositor currently
-            // reports no toplevels over IPC (activeToplevel stays null),
-            // so the poll keeps the title working until that is fixed.
+            // Re-tested on Hyprland 0.56.2 + quickshell 0.3.1:
+            // activeToplevel works but starts null until the first
+            // focus event (refreshToplevels() does not seed it),
+            // so the hyprctl poll seeds the title at startup.
             property string liveTitle: {
                 var t = (Hyprland.activeToplevel && Hyprland.activeToplevel.title) || "";
                 return t.slice(0, 60);
@@ -224,7 +240,7 @@ Scope {
                                     color: isActive ? barScope.theme.accent : "transparent"
                                     Text { anchors.centerIn: parent; text: wsId; color: isActive ? barScope.theme.accentFg : barScope.theme.textCol; font.family: barScope.theme.fontFam; font.pixelSize: 13; font.bold: isActive }
                                     MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor
-                                        onClicked: Hyprland.dispatch("workspace " + wsId) }
+                                        onClicked: barScope.dispatchWorkspace(wsId) }
                                 }
                             }
                         }
