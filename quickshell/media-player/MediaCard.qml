@@ -8,103 +8,90 @@ Item {
     width: 410
     height: 116
 
-    property string manualDbus: ""
-
-    // Theme accent, fed from shell.qml (live quickshell accent).
-    // Falls back to Beige to fit most themes
     property string accent: "#fed79d"
     property string accentFg: "#171717"
 
-    readonly property var allPlayers: Mpris.players.values
+    readonly property string fontFam: "Fira Sans Semibold, sans-serif"
+    // Private-use glyphs (play/pause/skip) always need the Nerd Font.
+    readonly property string iconFam: "Firacode Nerd Font, Fira Sans Semibold, sans-serif"
 
-    function playerIndex(): int {
-        const vals = Mpris.players.values;
-        for (let i = 0; i < vals.length; ++i)
-            if (player && vals[i].dbusName === player.dbusName)
-                return i;
-        return 0;
+    property string manualDbus: ""
+
+    readonly property var players: Mpris.players.values
+
+    function pickAuto() {
+        const all = root.players;
+        if (!all || all.length === 0) return null;
+        for (let i = 0; i < all.length; ++i) {
+            if (all[i].isPlaying) return all[i];
+        }
+        for (let i = 0; i < all.length; ++i) {
+            if (all[i].playbackState === MprisPlaybackState.Paused) return all[i];
+        }
+        return all[0];
     }
 
-    function pickAuto(): var {
-        const vals = Mpris.players.values;
-        if (!vals || vals.length === 0)
-            return null;
-        for (let i = 0; i < vals.length; ++i) {
-            if (vals[i].isPlaying)
-                return vals[i];
-        }
-        for (let i = 0; i < vals.length; ++i) {
-            if (vals[i].playbackState === MprisPlaybackState.Paused)
-                return vals[i];
-        }
-        return vals[0];
-    }
+    readonly property var autoPlayer: root.pickAuto()
 
-    readonly property var autoPlayer: pickAuto()
-
-    // If the manually picked player vanished, fall back to auto.
     readonly property var player: {
-        const vals = Mpris.players.values;
-        if (root.manualDbus !== "") {
-            for (let i = 0; i < vals.length; ++i) {
-                if (vals[i].dbusName === root.manualDbus)
-                    return vals[i];
-            }
+        if (root.manualDbus === "") return root.autoPlayer;
+        for (let i = 0; i < root.players.length; ++i) {
+            if (root.players[i].dbusName === root.manualDbus) return root.players[i];
         }
         return root.autoPlayer;
     }
 
-    readonly property bool hasPlayer: player !== null && player !== undefined
-    readonly property bool isPlaying: hasPlayer ? player.isPlaying : false
+    // MprisPlayer is a QObject: a destroyed player becomes a null JS value.
+    readonly property bool hasPlayer: root.player !== null && root.player !== undefined
+    readonly property bool isPlaying: root.hasPlayer && root.player.isPlaying
 
-    readonly property string title: hasPlayer && player.trackTitle !== "" ? player.trackTitle : (hasPlayer ? "Unknown Title" : "Nothing playing")
-    readonly property string artist: hasPlayer && player.trackArtist !== "" ? player.trackArtist : (hasPlayer ? "Unknown Artist" : "Start some music")
-    readonly property string album: hasPlayer ? player.trackAlbum : ""
-    readonly property string artUrl: hasPlayer ? (player.trackArtUrl || "") : ""
-    readonly property string source: hasPlayer ? (player.identity || player.dbusName || "") : ""
-    readonly property int playerCount: Mpris.players.values.length
+    readonly property string title: !root.hasPlayer ? "Nothing playing"
+        : (root.player.trackTitle !== "" ? root.player.trackTitle : "Unknown Title")
+    readonly property string artist: !root.hasPlayer ? "Start some music"
+        : (root.player.trackArtist !== "" ? root.player.trackArtist : "Unknown Artist")
+    readonly property string album: root.hasPlayer ? root.player.trackAlbum : ""
+    readonly property string artUrl: root.hasPlayer ? (root.player.trackArtUrl || "") : ""
+    readonly property string source: root.hasPlayer ? (root.player.identity || root.player.dbusName || "") : ""
 
-    function cyclePlayer(dir: int): void {
-        const vals = Mpris.players.values;
-        if (vals.length < 2)
-            return;
-        let idx = -1;
-        for (let i = 0; i < vals.length; ++i) {
-            if (player && vals[i].dbusName === player.dbusName) {
-                idx = i;
-                break;
-            }
+    readonly property int playerIndex: {
+        if (!root.hasPlayer) return -1;
+        for (let i = 0; i < root.players.length; ++i) {
+            if (root.players[i].dbusName === root.player.dbusName) return i;
         }
-        const next = vals[(idx + dir + vals.length) % vals.length];
-        root.manualDbus = next.dbusName;
+        return -1;
     }
 
-    function fmt(sec: real): string {
-        if (!isFinite(sec) || sec < 0)
-            sec = 0;
-        const m = Math.floor(sec / 60);
-        const s = Math.floor(sec % 60);
+    function cyclePlayer(dir) {
+        if (root.players.length < 2) return;
+        const from = root.playerIndex < 0 ? 0 : root.playerIndex;
+        root.manualDbus = root.players[(from + dir + root.players.length) % root.players.length].dbusName;
+    }
+
+    function fmt(sec) {
+        const total = isFinite(sec) && sec > 0 ? Math.floor(sec) : 0;
+        const m = Math.floor(total / 60);
+        const s = total % 60;
         return m + ":" + (s < 10 ? "0" + s : "" + s);
     }
 
+    // MprisPlayer.position is pull-based: emitting positionChanged is what
+    // makes it re-read the position over D-Bus.
     Timer {
         interval: 800
         running: root.isPlaying
         repeat: true
         onTriggered: {
-            if (root.player)
-                root.player.positionChanged();
+            if (root.player !== null && root.player !== undefined) root.player.positionChanged();
         }
     }
 
-    readonly property real pos: hasPlayer ? player.position : 0
-    readonly property real len: (hasPlayer && player.lengthSupported) ? player.length : 0
-    readonly property real progress: len > 0 ? Math.min(1, Math.max(0, pos / len)) : 0
-    readonly property bool seekable: hasPlayer && player.canSeek
+    readonly property real position: root.hasPlayer ? root.player.position : 0
+    readonly property real length: root.hasPlayer && root.player.lengthSupported ? root.player.length : 0
+    readonly property real progress: root.length > 0
+        ? Math.min(1, Math.max(0, root.position / root.length)) : 0
+    readonly property bool seekable: root.hasPlayer && root.player.canSeek && root.length > 0
 
-    // card background
     Rectangle {
-        id: bg
         anchors.fill: parent
         radius: 14
         color: Qt.rgba(0.09, 0.09, 0.09, 0.88)
@@ -113,20 +100,19 @@ Item {
     }
 
     Rectangle {
-        id: closeBtn
-        width: 22
-        height: 22
-        radius: 11
         anchors.top: parent.top
         anchors.right: parent.right
         anchors.topMargin: 6
         anchors.rightMargin: 6
+        width: 22
+        height: 22
+        radius: 11
         color: closeArea.containsMouse ? Qt.rgba(224, 108, 117, 0.25) : "transparent"
         Text {
             anchors.centerIn: parent
-            text: "✕"
+            text: "\u{2715}"
+            font.family: root.fontFam
             font.pixelSize: 11
-            font.family: "Fira Sans Semibold, sans-serif"
             color: closeArea.containsMouse ? "#e06c75" : "#a0a0a0"
         }
         MouseArea {
@@ -144,9 +130,7 @@ Item {
         anchors.rightMargin: 16
         spacing: 12
 
-        // album art
         ClippingRectangle {
-            id: artClip
             Layout.preferredWidth: 64
             Layout.preferredHeight: 64
             Layout.alignment: Qt.AlignVCenter
@@ -165,13 +149,13 @@ Item {
             Text {
                 anchors.centerIn: parent
                 visible: root.artUrl === ""
-                text: "♪"
+                text: "\u{266a}"
+                font.family: root.fontFam
                 font.pixelSize: 26
                 color: root.accent
             }
         }
 
-        // text + progress
         ColumnLayout {
             Layout.fillWidth: true
             Layout.alignment: Qt.AlignVCenter
@@ -180,7 +164,7 @@ Item {
             Text {
                 Layout.fillWidth: true
                 text: root.title
-                font.family: "Fira Sans Semibold, sans-serif"
+                font.family: root.fontFam
                 font.pixelSize: 14
                 font.weight: Font.DemiBold
                 color: "#ffffff"
@@ -189,15 +173,14 @@ Item {
             }
             Text {
                 Layout.fillWidth: true
-                text: root.album !== "" ? root.artist + "  •  " + root.album : root.artist
-                font.family: "Fira Sans Semibold, sans-serif"
+                text: root.album !== "" ? root.artist + "  \u{2022}  " + root.album : root.artist
+                font.family: root.fontFam
                 font.pixelSize: 12
                 color: "#a0a0a0"
                 elide: Text.ElideRight
                 maximumLineCount: 1
             }
 
-            // progress bar
             Rectangle {
                 id: progBg
                 Layout.fillWidth: true
@@ -215,11 +198,10 @@ Item {
                 }
                 MouseArea {
                     anchors.fill: parent
-                    enabled: root.seekable && root.len > 0
+                    enabled: root.seekable
                     cursorShape: Qt.PointingHandCursor
                     onClicked: mouse => {
-                        const ratio = Math.min(1, Math.max(0, mouse.x / progBg.width));
-                        root.player.position = root.len * ratio;
+                        root.player.position = root.length * Math.min(1, Math.max(0, mouse.x / progBg.width));
                     }
                 }
             }
@@ -228,20 +210,18 @@ Item {
                 Layout.fillWidth: true
                 spacing: 6
                 Text {
-                    text: root.fmt(root.pos) + " / " + (root.len > 0 ? root.fmt(root.len) : "--:--")
-                    font.family: "Fira Sans Semibold, monospace"
+                    text: root.fmt(root.position) + " / " + (root.length > 0 ? root.fmt(root.length) : "--:--")
+                    font.family: "Firacode Nerd Font Mono, " + root.fontFam
                     font.pixelSize: 10
                     color: "#a0a0a0"
                 }
-                Item {
-                    Layout.fillWidth: true
-                }
-                // player switcher, only when multiple players
+                Item { Layout.fillWidth: true }
                 RowLayout {
-                    visible: root.playerCount > 1
+                    visible: root.players.length > 1
                     spacing: 4
                     Text {
-                        text: "‹"
+                        text: "\u{2039}"
+                        font.family: root.fontFam
                         font.pixelSize: 13
                         font.bold: true
                         color: prevPlayerArea.containsMouse ? root.accent : "#a0a0a0"
@@ -254,14 +234,16 @@ Item {
                         }
                     }
                     Text {
-                        text: root.source + " " + (root.playerCount > 0 ? "(" + (root.playerIndex() + 1) + "/" + root.playerCount + ")" : "")
-                        font.family: "Fira Sans Semibold, sans-serif"
+                        text: root.playerIndex < 0 ? root.source
+                            : root.source + " (" + (root.playerIndex + 1) + "/" + root.players.length + ")"
+                        font.family: root.fontFam
                         font.pixelSize: 10
                         color: "#a0a0a0"
                         elide: Text.ElideRight
                     }
                     Text {
-                        text: "›"
+                        text: "\u{203a}"
+                        font.family: root.fontFam
                         font.pixelSize: 13
                         font.bold: true
                         color: nextPlayerArea.containsMouse ? root.accent : "#a0a0a0"
@@ -275,9 +257,9 @@ Item {
                     }
                 }
                 Text {
-                    visible: root.playerCount <= 1
+                    visible: root.players.length <= 1
                     text: root.source
-                    font.family: "Fira Sans Semibold, sans-serif"
+                    font.family: root.fontFam
                     font.pixelSize: 10
                     color: "#a0a0a0"
                     elide: Text.ElideRight
@@ -285,23 +267,21 @@ Item {
             }
         }
 
-        // controls
         RowLayout {
             Layout.alignment: Qt.AlignVCenter
             spacing: 6
 
-            // prev
             Rectangle {
-                id: prevBtn
                 Layout.preferredWidth: 34
                 Layout.preferredHeight: 34
                 radius: 17
                 color: prevArea.containsMouse ? Qt.rgba(1, 1, 1, 0.12) : "transparent"
-                opacity: (root.hasPlayer && root.player.canGoPrevious) ? 1 : 0.3
+                opacity: root.hasPlayer && root.player.canGoPrevious ? 1 : 0.3
+                enabled: root.hasPlayer && root.player.canGoPrevious
                 Text {
                     anchors.centerIn: parent
-                    text: "󰒮"
-                    font.family: "Firacode Nerd Font, Fira Sans Semibold, sans-serif"
+                    text: "\u{f04ae}"
+                    font.family: root.iconFam
                     font.pixelSize: 17
                     color: "#ffffff"
                 }
@@ -310,27 +290,21 @@ Item {
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
-                    enabled: root.hasPlayer
-                    onClicked: {
-                        if (root.player.canGoPrevious)
-                            root.player.previous();
-                    }
+                    onClicked: root.player.previous()
                 }
             }
 
-            // play / pause (accent)
             Rectangle {
-                id: playBtn
                 Layout.preferredWidth: 44
                 Layout.preferredHeight: 44
                 radius: 22
                 color: playArea.containsMouse ? Qt.lighter(root.accent, 1.18) : root.accent
                 opacity: root.hasPlayer ? 1 : 0.4
+                enabled: root.hasPlayer
                 Text {
                     anchors.centerIn: parent
-                    anchors.horizontalCenterOffset: (root.isPlaying ? 0 : 1)
-                    text: root.isPlaying ? "\uf04c" : "\uf04b"
-                    font.family: "Firacode Nerd Font, Fira Sans Semibold, sans-serif"
+                    text: root.isPlaying ? "\u{f04c}" : "\u{f04b}"
+                    font.family: root.iconFam
                     font.pixelSize: 21
                     color: root.accentFg
                 }
@@ -339,30 +313,25 @@ Item {
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
-                    enabled: root.hasPlayer
                     onClicked: {
-                        if (root.player.canTogglePlaying)
-                            root.player.togglePlaying();
-                        else if (root.isPlaying)
-                            root.player.pause();
-                        else
-                            root.player.play();
+                        if (root.player.canTogglePlaying) root.player.togglePlaying();
+                        else if (root.isPlaying) root.player.pause();
+                        else root.player.play();
                     }
                 }
             }
 
-            // next
             Rectangle {
-                id: nextBtn
                 Layout.preferredWidth: 34
                 Layout.preferredHeight: 34
                 radius: 17
                 color: nextArea.containsMouse ? Qt.rgba(1, 1, 1, 0.12) : "transparent"
-                opacity: (root.hasPlayer && root.player.canGoNext) ? 1 : 0.3
+                opacity: root.hasPlayer && root.player.canGoNext ? 1 : 0.3
+                enabled: root.hasPlayer && root.player.canGoNext
                 Text {
                     anchors.centerIn: parent
-                    text: "󰒭"
-                    font.family: "Firacode Nerd Font, Fira Sans Semibold, sans-serif"
+                    text: "\u{f04ad}"
+                    font.family: root.iconFam
                     font.pixelSize: 17
                     color: "#ffffff"
                 }
@@ -371,11 +340,7 @@ Item {
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
-                    enabled: root.hasPlayer
-                    onClicked: {
-                        if (root.player.canGoNext)
-                            root.player.next();
-                    }
+                    onClicked: root.player.next()
                 }
             }
         }

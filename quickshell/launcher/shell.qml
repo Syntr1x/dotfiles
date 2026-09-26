@@ -1,5 +1,6 @@
-// (SUPER+R)
-// Enter = launch, Esc/click-outside = close.
+//@ pragma UseQApplication
+pragma ComponentBehavior: Bound
+// One-shot app launcher (SUPER+R).
 import Quickshell
 import Quickshell.Io
 import Quickshell.Hyprland
@@ -9,7 +10,7 @@ import QtQuick.Controls
 
 ShellRoot {
     id: root
-    property var theme: Theme {}
+    readonly property Theme theme: Theme {}
 
     property string query: ""
     property int selected: 0
@@ -19,12 +20,12 @@ ShellRoot {
 
     // Rofi-style frecency history: { "<desktop-id>": { c: launchCount, l: lastUseUnixSec } }
     property var history: ({})
-    property string historyDir: {
-        var s = Quickshell.env("XDG_STATE_HOME");
-        if (!s || s === "") s = (Quickshell.env("HOME") || "") + "/.local/state";
-        return s + "/quickshell";
+
+    readonly property string historyDir: {
+        const xdg = Quickshell.env("XDG_STATE_HOME");
+        return (xdg || (Quickshell.env("HOME") || "") + "/.local/state") + "/quickshell";
     }
-    property string historyPath: root.historyDir + "/launcher-history.json"
+    readonly property string historyPath: root.historyDir + "/launcher-history.json"
     property FileView historyFile: FileView {
         path: root.historyPath
         watchChanges: false
@@ -39,13 +40,11 @@ ShellRoot {
     }
 
     function frecency(e) {
-        var k = root.historyKey(e);
-        if (k === "") return 0;
-        var h = root.history[k];
-        if (!h) return 0;
-        var countScore = Math.min((h.c || 0) * 2, 20);
-        var age = Math.floor(Date.now() / 1000) - (h.l || 0);
-        var recency = 0;
+        const entry = root.history[root.historyKey(e)];
+        if (!entry) return 0;
+        const countScore = Math.min((entry.c || 0) * 2, 20);
+        const age = Math.floor(Date.now() / 1000) - (entry.l || 0);
+        let recency = 0;
         if (age < 3600) recency = 15;
         else if (age < 86400) recency = 10;
         else if (age < 7 * 86400) recency = 5;
@@ -54,104 +53,100 @@ ShellRoot {
     }
 
     function loadHistory() {
-        var parsed = {};
+        let parsed = {};
         try {
-            var txt = root.historyFile.text();
+            const txt = root.historyFile.text();
             if (txt && txt.trim() !== "") {
-                var obj = JSON.parse(txt);
+                const obj = JSON.parse(txt);
                 if (obj && typeof obj === "object") parsed = obj;
             }
         } catch (err) { parsed = {}; }
-        // Sanitize: drop entries for uninstalled apps — but only when we
-        // actually have an app list. DesktopEntries loads async and can
-        // still be empty at startup; pruning then would wipe all history.
-        var known = {};
-        var apps = root.allApps();
-        var hasApps = apps.length > 0;
-        for (var i = 0; i < apps.length; i++) known[root.historyKey(apps[i])] = true;
-        var clean = {}, keys = Object.keys(parsed);
-        for (var j = 0; j < keys.length; j++) {
-            var v = parsed[keys[j]];
-            if (hasApps && !known[keys[j]]) continue;
+
+        // Drop entries for uninstalled apps — but only with a non-empty app list,
+        // or a slow DesktopEntries scan would wipe all history at startup.
+        const apps = root.allApps();
+        const known = {};
+        for (let i = 0; i < apps.length; i++) known[root.historyKey(apps[i])] = true;
+
+        const clean = {};
+        for (const key of Object.keys(parsed)) {
+            const v = parsed[key];
+            if (apps.length > 0 && !known[key]) continue;
             if (!v || typeof v.c !== "number") continue;
-            clean[keys[j]] = { c: Math.max(0, Math.min(v.c, 10000)), l: (typeof v.l === "number") ? v.l : 0 };
+            clean[key] = { c: Math.max(0, Math.min(v.c, 10000)), l: typeof v.l === "number" ? v.l : 0 };
         }
         root.history = clean;
     }
 
     function saveHistory() {
+        const keys = Object.keys(root.history);
+        if (keys.length > 150) {
+            const scored = keys.map(key => [(root.history[key].c || 0) * 1e10 + (root.history[key].l || 0), key]);
+            scored.sort((a, b) => b[0] - a[0]);
+            const trimmed = {};
+            for (let i = 0; i < 150; i++) trimmed[scored[i][1]] = root.history[scored[i][1]];
+            root.history = trimmed;
+        }
         try {
-            var keys = Object.keys(root.history);
-            if (keys.length > 150) {
-                var scored = [];
-                for (var i = 0; i < keys.length; i++) {
-                    var h = root.history[keys[i]];
-                    scored.push([(h.c || 0) * 10000000000 + (h.l || 0), keys[i]]);
-                }
-                scored.sort(function(a, b) { return b[0] - a[0]; });
-                var trimmed = {};
-                for (var j = 0; j < 150; j++) trimmed[scored[j][1]] = root.history[scored[j][1]];
-                root.history = trimmed;
-            }
             root.historyFile.setText(JSON.stringify(root.history));
         } catch (err) {}
     }
 
     function recordLaunch(e) {
         try {
-            var k = root.historyKey(e);
-            if (k === "") return;
-            var h = root.history[k] || { c: 0, l: 0 };
-            h.c = (h.c || 0) + 1;
-            h.l = Math.floor(Date.now() / 1000);
-            var nh = {};
-            for (var key in root.history) nh[key] = root.history[key];
-            nh[k] = h;
-            root.history = nh;
-            root.saveHistory();
+        const key = root.historyKey(e);
+        if (key === "") return;
+        // Reassign instead of mutating: QML does not track plain JS object
+        // changes, so a property write is what makes frecency() see it.
+        const history = Object.assign({}, root.history);
+        const entry = history[key] || { c: 0, l: 0 };
+        entry.c = (entry.c || 0) + 1;
+        entry.l = Math.floor(Date.now() / 1000);
+        history[key] = entry;
+        root.history = history;
+        root.saveHistory();
         } catch (err) {}
     }
 
-    function stepSelection(d) {
+    function stepSelection(delta) {
         if (root.filtered.length === 0) return;
-        root.selected = Math.max(0, Math.min(root.selected + d, root.filtered.length - 1));
+        root.selected = Math.max(0, Math.min(root.selected + delta, root.filtered.length - 1));
     }
 
     function allApps() {
         if (typeof DesktopEntries === "undefined" || !DesktopEntries.applications) return [];
-        var out = [], vals = DesktopEntries.applications.values;
-        for (var i = 0; i < vals.length; i++) {
-            var e = vals[i];
-            if (e.noDisplay) continue;
-            out.push(e);
+        const values = DesktopEntries.applications.values;
+        const out = [];
+        for (let i = 0; i < values.length; i++) {
+            if (!values[i].noDisplay) out.push(values[i]);
         }
-        out.sort(function(a, b) { return a.name.localeCompare(b.name); });
+        out.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
         return out;
     }
 
-    // fuzzy-ish score: prefix > word-boundary > substring > comment/keyword.
-    // negative = no match.
     function score(e, q) {
         if (q === "") return 0;
-        var name = (e.name || "").toLowerCase();
-        var i = name.indexOf(q);
+        const name = (e.name || "").toLowerCase();
+        const i = name.indexOf(q);
         if (i === 0) return 100 - name.length;
         if (i > 0) {
-            var wb = name[i - 1] === " " || name[i - 1] === "-" || name[i - 1] === "_";
-            return (wb ? 60 : 40) - i - name.length * 0.1;
+            const wordStart = name[i - 1] === " " || name[i - 1] === "-" || name[i - 1] === "_";
+            return (wordStart ? 60 : 40) - i - name.length * 0.1;
         }
-        var id = (e.id || "").toLowerCase();
+        const id = (e.id || "").toLowerCase();
         if (id.indexOf(q) >= 0) return 20 - id.indexOf(q);
-        var gn = (e.genericName || "").toLowerCase();
-        if (gn && gn.indexOf(q) >= 0) return 15 - gn.indexOf(q);
-        var cm = (e.comment || "").toLowerCase();
-        if (cm && cm.indexOf(q) >= 0) return 10 - cm.indexOf(q);
-        if (e.keywords) for (var k = 0; k < e.keywords.length; k++)
-            if ((e.keywords[k] || "").toLowerCase().indexOf(q) >= 0) return 5;
-        // subsequence fallback (e.g. "ff" -> "Firefox")
-        var ni = 0;
-        for (var qi = 0; qi < q.length; qi++) {
-            ni = name.indexOf(q[qi], ni);
+        const generic = (e.genericName || "").toLowerCase();
+        if (generic.indexOf(q) >= 0) return 15 - generic.indexOf(q);
+        const comment = (e.comment || "").toLowerCase();
+        if (comment.indexOf(q) >= 0) return 10 - comment.indexOf(q);
+        if (e.keywords) {
+            for (const keyword of e.keywords) {
+                if ((keyword || "").toLowerCase().indexOf(q) >= 0) return 5;
+            }
+        }
+        let ni = 0;
+        for (const c of q) {
+            ni = name.indexOf(c, ni);
             if (ni < 0) return -1;
             ni++;
         }
@@ -159,39 +154,26 @@ ShellRoot {
     }
 
     function refilter() {
-        var q = root.query.trim().toLowerCase();
-        var apps = allApps();
+        const q = root.query.trim().toLowerCase();
+        const apps = root.allApps();
+
         if (q === "") {
-            // Recents first (frecency desc), then the rest alphabetically.
-            var recent = [];
-            for (var i = 0; i < apps.length; i++) {
-                recent.push([root.frecency(apps[i]), (apps[i].name || "").toLowerCase(), apps[i]]);
-            }
-            recent.sort(function(a, b) {
-                if (b[0] !== a[0]) return b[0] - a[0];
-                if (a[1] < b[1]) return -1;
-                if (a[1] > b[1]) return 1;
-                return 0;
-            });
-            var out = [];
-            for (var j = 0; j < recent.length && j < 60; j++) out.push(recent[j][2]);
-            root.filtered = out;
+            const ranked = apps.map(app => [root.frecency(app), (app.name || "").toLowerCase(), app]);
+            ranked.sort((a, b) => b[0] - a[0] || (a[1] < b[1] ? -1 : a[1] > b[1] ? 1 : 0));
+            root.filtered = ranked.slice(0, 60).map(r => r[2]);
             root.selected = 0;
             return;
         }
-        var scored = [];
-        for (var k = 0; k < apps.length; k++) {
-            var s = root.score(apps[k], q);
+
+        const scored = [];
+        for (const app of apps) {
+            const s = root.score(app, q);
             if (s < 0) continue;
-            // Small frecency tie-break so often-used matches float up
-            // without beating clearly better text matches (max +12).
-            s += Math.min(root.frecency(apps[k]), 24) * 0.5;
-            scored.push([s, apps[k]]);
+            // Capped frecency tie-break so frequent matches float up without beating better text matches.
+            scored.push([s + Math.min(root.frecency(app), 24) * 0.5, app]);
         }
-        scored.sort(function(a, b) { return b[0] - a[0]; });
-        var out2 = [];
-        for (var m = 0; m < scored.length && m < 60; m++) out2.push(scored[m][1]);
-        root.filtered = out2;
+        scored.sort((a, b) => b[0] - a[0]);
+        root.filtered = scored.slice(0, 60).map(s => s[1]);
         root.selected = 0;
     }
 
@@ -201,33 +183,42 @@ ShellRoot {
 
     function launchEntry(e) {
         if (!e) return;
-        if (e.runInTerminal) {
-            var cmd = (e.command && e.command.length > 0) ? e.command : ["sh", "-c", e.execString];
-            var workdir = (e.workingDirectory && e.workingDirectory !== "") ? e.workingDirectory : null;
-            var inner = "";
-            for (var i = 0; i < cmd.length; i++) {
-                if (i > 0) inner += " ";
-                inner += shellQuote(cmd[i]);
-            }
-            var script = (workdir ? "cd " + shellQuote(workdir) + " && " : "") + inner;
-            script += "; code=$?; if [ $code -ne 0 ]; then echo \"[exit $code - press Enter to close]\"; read _; fi";
-            var ctx = { command: root.terminalEmulator.concat(["sh", "-c", script]) };
-            if (workdir) ctx.workingDirectory = workdir;
-            Quickshell.execDetached(ctx);
-        } else {
+        if (!e.runInTerminal) {
             e.execute();
+            return;
         }
+        // Keep the terminal open on failure so the exit code can be read.
+        const cmd = e.command && e.command.length > 0 ? e.command : ["sh", "-c", e.execString];
+        const workdir = e.workingDirectory || null;
+        const inner = cmd.map(root.shellQuote).join(" ");
+        let script = (workdir ? "cd " + root.shellQuote(workdir) + " && " : "") + inner;
+        script += "; code=$?; if [ $code -ne 0 ]; then echo \"[exit $code - press Enter to close]\"; read _; fi";
+        Quickshell.execDetached({
+            command: root.terminalEmulator.concat(["sh", "-c", script]),
+            workingDirectory: workdir || undefined
+        });
     }
 
     function launchCurrent() {
-        if (root.filtered.length === 0) {
-            Qt.quit();
-            return;
+        if (root.filtered.length > 0) {
+            const entry = root.filtered[Math.min(root.selected, root.filtered.length - 1)];
+            root.recordLaunch(entry);
+            root.launchEntry(entry);
         }
-        var entry = root.filtered[Math.min(root.selected, root.filtered.length - 1)];
-        root.recordLaunch(entry);
-        root.launchEntry(entry);
         Qt.quit();
+    }
+
+    function handleKey(e) {
+        if (e.key === Qt.Key_Escape) Qt.quit();
+        else if (e.key === Qt.Key_Down) root.stepSelection(1);
+        else if (e.key === Qt.Key_Up) root.stepSelection(-1);
+        else if (e.key === Qt.Key_PageDown) root.stepSelection(8);
+        else if (e.key === Qt.Key_PageUp) root.stepSelection(-8);
+        else if (e.key === Qt.Key_Home) root.selected = 0;
+        else if (e.key === Qt.Key_End) root.selected = Math.max(0, root.filtered.length - 1);
+        else if (e.key === Qt.Key_Return || e.key === Qt.Key_Enter) root.launchCurrent();
+        else return;
+        e.accepted = true;
     }
 
     Component.onCompleted: {
@@ -236,8 +227,9 @@ ShellRoot {
         root.refilter();
     }
 
+    // DesktopEntries scans async: empty at onCompleted, applicationsChanged fires once it lands.
     Connections {
-        target: DesktopEntries
+        target: typeof DesktopEntries === "undefined" ? null : DesktopEntries
         function onApplicationsChanged() { root.loadHistory(); root.refilter(); }
     }
 
@@ -271,16 +263,7 @@ ShellRoot {
 
         Item {
             anchors.fill: parent
-            Keys.onPressed: e => {
-                if (e.key === Qt.Key_Escape) { Qt.quit(); e.accepted = true; }
-                else if (e.key === Qt.Key_Down) { root.stepSelection(1); e.accepted = true; }
-                else if (e.key === Qt.Key_Up) { root.stepSelection(-1); e.accepted = true; }
-                else if (e.key === Qt.Key_PageDown) { root.stepSelection(8); e.accepted = true; }
-                else if (e.key === Qt.Key_PageUp) { root.stepSelection(-8); e.accepted = true; }
-                else if (e.key === Qt.Key_Home) { root.selected = 0; e.accepted = true; }
-                else if (e.key === Qt.Key_End) { root.selected = Math.max(0, root.filtered.length - 1); e.accepted = true; }
-                else if (e.key === Qt.Key_Return || e.key === Qt.Key_Enter) { root.launchCurrent(); e.accepted = true; }
-            }
+            Keys.onPressed: event => root.handleKey(event)
         }
 
         Rectangle {
@@ -303,28 +286,19 @@ ShellRoot {
                     color: Qt.rgba(255, 255, 255, 0.06)
                     RowLayout {
                         anchors.fill: parent; anchors.leftMargin: 14; anchors.rightMargin: 14; spacing: 10
-                        Text { text: ""; color: root.theme.textSub; font.pixelSize: 15 }
+                        Text { text: "\u{f002}"; color: root.theme.textSub; font.family: root.theme.fontFam; font.pixelSize: 15 }
                         TextInput {
                             id: entry
                             Layout.fillWidth: true
                             text: root.query
                             color: "white"
                             selectionColor: root.theme.accent
-                            selectedTextColor: "#121214"
+                            selectedTextColor: root.theme.accentFg
                             font.family: root.theme.fontFam; font.pixelSize: 14
                             focus: true
-                            onTextChanged: { root.query = text; root.refilter(); }
+                            onTextEdited: { root.query = text; root.refilter(); }
                             onActiveFocusChanged: { if (!activeFocus) focusTimer.running = true; }
-                            Keys.onPressed: e => {
-                                if (e.key === Qt.Key_Down) { root.stepSelection(1); e.accepted = true; }
-                                else if (e.key === Qt.Key_Up) { root.stepSelection(-1); e.accepted = true; }
-                                else if (e.key === Qt.Key_PageDown) { root.stepSelection(8); e.accepted = true; }
-                                else if (e.key === Qt.Key_PageUp) { root.stepSelection(-8); e.accepted = true; }
-                                else if (e.key === Qt.Key_Home) { root.selected = 0; e.accepted = true; }
-                                else if (e.key === Qt.Key_End) { root.selected = Math.max(0, root.filtered.length - 1); e.accepted = true; }
-                                else if (e.key === Qt.Key_Return || e.key === Qt.Key_Enter) { root.launchCurrent(); e.accepted = true; }
-                                else if (e.key === Qt.Key_Escape) { Qt.quit(); e.accepted = true; }
-                            }
+                            Keys.onPressed: event => root.handleKey(event)
                         }
                     }
                 }
@@ -336,31 +310,36 @@ ShellRoot {
                     clip: true
                     spacing: 6
                     currentIndex: root.selected
-                    flickableDirection: Flickable.VerticalFlick
                     boundsBehavior: Flickable.StopAtBounds
-                    ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
-                    onCurrentIndexChanged: { if (count > 0 && currentIndex >= 0) positionViewAtIndex(currentIndex, ListView.Contain); }
-                    onCountChanged: { if (count > 0) positionViewAtBeginning(); }
+                    // Keep the keyboard selection in view.
+                    onCurrentIndexChanged: { if (currentIndex >= 0) positionViewAtIndex(currentIndex, ListView.Contain); }
+                    onCountChanged: positionViewAtBeginning()
                     delegate: Rectangle {
+                        id: resultRow
                         required property var modelData
                         required property int index
-                        width: ListView.view.width; height: 46; radius: 10
-                        color: index === root.selected ? root.theme.accent : (rowHover.containsMouse ? Qt.rgba(255, 255, 255, 0.06) : Qt.rgba(255, 255, 255, 0.03))
+                        readonly property bool isSelected: resultRow.index === root.selected
+                        width: ListView.view.width
+                        height: 46
+                        radius: 10
+                        color: resultRow.isSelected ? root.theme.accent
+                            : (rowHover.containsMouse ? Qt.rgba(255, 255, 255, 0.06) : Qt.rgba(255, 255, 255, 0.03))
                         ColumnLayout {
                             anchors.fill: parent; anchors.leftMargin: 14; anchors.rightMargin: 14
                             anchors.topMargin: 5; anchors.bottomMargin: 5; spacing: 0
                             Text {
                                 Layout.fillWidth: true
-                                text: modelData.name || modelData.id
-                                color: index === root.selected ? "#121214" : "white"
-                                font.family: root.theme.fontFam; font.pixelSize: 13; font.bold: index === root.selected
+                                text: resultRow.modelData.name || resultRow.modelData.id
+                                color: resultRow.isSelected ? root.theme.accentFg : "white"
+                                font.family: root.theme.fontFam; font.pixelSize: 13; font.bold: resultRow.isSelected
                                 elide: Text.ElideRight
                             }
                             Text {
+                                readonly property string subtitle: resultRow.modelData.genericName || resultRow.modelData.comment || ""
                                 Layout.fillWidth: true
-                                visible: (modelData.genericName || modelData.comment) !== ""
-                                text: modelData.genericName || modelData.comment || ""
-                                color: index === root.selected ? "#121214" : root.theme.textSub
+                                visible: subtitle !== ""
+                                text: subtitle
+                                color: resultRow.isSelected ? root.theme.accentFg : root.theme.textSub
                                 font.family: root.theme.fontFam; font.pixelSize: 10
                                 elide: Text.ElideRight
                             }
@@ -368,15 +347,15 @@ ShellRoot {
                         MouseArea {
                             id: rowHover
                             anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
-                            onEntered: root.selected = index
-                            onClicked: { root.selected = index; root.launchCurrent(); }
+                            onEntered: root.selected = resultRow.index
+                            onClicked: { root.selected = resultRow.index; root.launchCurrent(); }
                         }
                     }
                 }
 
                 Text {
                     Layout.fillWidth: true
-                    text: root.filtered.length + " apps  •  Enter launch  •  Esc close"
+                    text: root.filtered.length + " apps  \u{2022}  Enter launch  \u{2022}  Esc close"
                     color: root.theme.textSub; font.family: root.theme.fontFam; font.pixelSize: 10
                     horizontalAlignment: Text.AlignHCenter
                 }

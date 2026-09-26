@@ -1,9 +1,14 @@
 #!/bin/bash
+# Toggle the media popup.
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# NOTE: [q]uickshell bracket trick so pgrep/pkill never match this script itself.
-PATTERN="[q]uickshell.*media-player/shell.qml"
-if pgrep -f "$PATTERN" > /dev/null; then
-    pkill -f "$PATTERN"
+
+# Match by config path: argv[0] may be "qs" or "quickshell".
+# Escape order matters: backslashes first, [ and ] separately
+# ("[." inside one bracket expression misparses on GNU sed).
+PATTERN="$(printf '%s' "$HERE/shell.qml" | sed -e 's/\\/\\\\/g' -e 's/[.^$*+?(){|}]/\\&/g' -e 's/\[/\\[/g' -e 's/\]/\\]/g')"
+
+if pgrep -f -- "$PATTERN" >/dev/null 2>&1; then
+    pkill -f -- "$PATTERN"
 else
-    nohup quickshell -p "$HERE/shell.qml" > /dev/null 2>&1 &
+    nohup qs -p "$HERE/shell.qml" >/dev/null 2>&1 & disown
 fi

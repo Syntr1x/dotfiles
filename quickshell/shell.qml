@@ -1,7 +1,6 @@
 //@ pragma UseQApplication
-// Default config — run with plain `qs`. Bar daemon with IPC toggle.
-// SUPER+W (toggle) -> `qs ipc call bar toggle`
-// Launcher is one-shot: `qs -p ~/.config/quickshell/launcher/shell.qml` on SUPER+R.
+pragma ComponentBehavior: Bound
+// Bar config: SUPER+W toggles (toggle-bar.sh), SUPER+R opens launcher/shell.qml.
 import Quickshell
 import Quickshell.Io
 import QtQuick
@@ -9,16 +8,18 @@ import "bar/" as BarModule
 
 ShellRoot {
     id: root
+
     Theme { id: theme }
 
-    property bool barVisible: true
+    property bool _hidden: false
+    readonly property bool barVisible: !root._hidden
 
     IpcHandler {
         target: "bar"
 
-        function toggle(): void { root.barVisible = !root.barVisible; }
-        function show(): void { root.barVisible = true; }
-        function hide(): void { root.barVisible = false; }
+        function toggle(): void { root._hidden = !root._hidden; }
+        function show(): void { root._hidden = false; }
+        function hide(): void { root._hidden = true; }
     }
 
     BarModule.Bar {

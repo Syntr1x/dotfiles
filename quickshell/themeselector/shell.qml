@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import Quickshell
 import Quickshell.Io
 import Quickshell.Hyprland
@@ -7,7 +8,7 @@ import QtQuick.Layouts
 ShellRoot {
     id: root
 
-    // ── Theme data (mirrors apply.sh) ──
+    // Keep these tables in sync with apply.sh (it rejects out-of-range indexes).
     property var themes: ["syn-beige","syn-Broadcast","syn-mellow","syn-Ocean","IC_Orange_PPL","Gruvbox","syn-rose-pine","syn-Tango","Tomorrow","syn-green","traffic","syn-mellow-darkmode"]
     property var themeNames: ["Beige","Dark","Purple","Blue","Orange","Gruvbox","Kirby","Moondrop","Winter","Green","Destiny 2","Purple(darkmode)"]
     property var wallpapers: ["Flowers.png","darkPlants.jpg","pinkRose.jpg","bluesky.jpg","TrainPath.png","Arch_retro.png","kirby.jpg","Moondrop_white.jpg","winter.jpg","leaves.jpg","thats_it.jpg","black_oled.jpg"]
@@ -17,13 +18,13 @@ ShellRoot {
     property int currentIdx: -1
     property string statusMsg: "Select a theme"
     property bool isApplying: false
-    // accent follows selected theme (preview) otherwise current theme falls back
+    // Reported on completion; may differ from selectedIdx if it moved mid-apply.
+    property int applyingIdx: -1
     property string accentColor: {
         let idx = root.selectedIdx >= 0 ? root.selectedIdx : root.currentIdx;
         if (idx >= 0 && idx < root.accentColors.length) return root.accentColors[idx];
         return "#7aa2f7";
     }
-    // readable text on accent (white for dark accents, dark for light accents like Beige #d8c8b3)
     property string accentFg: {
         let c = root.accentColor;
         if (!c || c.length < 7) return "white";
@@ -49,11 +50,16 @@ ShellRoot {
         return xdg + "/hypr/Wallpapers";
     }
     property string applyScript: Quickshell.shellPath("apply.sh")
+    property string ghosttyConfig: {
+        let xdg = Quickshell.env("XDG_CONFIG_HOME");
+        return (xdg || (Quickshell.env("HOME") || "") + "/.config") + "/ghostty/config";
+    }
 
-    // detect current theme on startup
+    // Quote the path: spaces in $HOME/XDG must not split it.
+    function shellQuote(s) { return "'" + String(s).replace(/'/g, "'\\''") + "'"; }
     Process {
         id: detectProc
-        command: ["bash","-c","grep -E '^[[:space:]]*theme[[:space:]]*=' ~/.config/ghostty/config | tail -n1 | cut -d= -f2 | xargs"]
+        command: ["bash","-c","grep -E '^[[:space:]]*theme[[:space:]]*=' " + root.shellQuote(root.ghosttyConfig) + " | tail -n1 | cut -d= -f2- | xargs"]
         running: true
         stdout: StdioCollector {
             onStreamFinished: {
@@ -64,16 +70,15 @@ ShellRoot {
         }
     }
 
-    // apply process
     Process {
         id: applyProc
-        stdout: StdioCollector { onStreamFinished: { root.statusMsg = text.trim(); } }
-        stderr: StdioCollector { onStreamFinished: { if(text.trim()!=="") root.statusMsg = text.trim() } }
-        onExited: (code,status) => {
+        stdout: StdioCollector { onStreamFinished: { if (text.trim() !== "") root.statusMsg = text.trim() } }
+        stderr: StdioCollector { onStreamFinished: { if (text.trim() !== "") root.statusMsg = text.trim() } }
+        onExited: code => {
             root.isApplying = false
-            if (code===0) {
-                root.currentIdx = root.selectedIdx
-                root.statusMsg = "✓ Applied " + root.themeNames[root.selectedIdx]
+            if (code === 0) {
+                root.currentIdx = root.applyingIdx
+                root.statusMsg = "✓ Applied " + root.themeNames[root.applyingIdx]
             } else {
                 root.statusMsg = "✗ Failed (code " + code + ")"
             }
@@ -81,7 +86,8 @@ ShellRoot {
     }
 
     function applyTheme(idx) {
-        if (idx<0 || idx>=root.themes.length) return
+        if (idx < 0 || idx >= root.themes.length || root.isApplying) return
+        root.applyingIdx = idx
         root.isApplying = true
         root.statusMsg = "Applying " + root.themeNames[idx] + "…"
         applyProc.command = ["bash", root.applyScript, String(idx)]
@@ -100,7 +106,6 @@ ShellRoot {
         color: "transparent"
         minimumSize: Qt.size(900, 600)
 
-        // focus grab so Esc / click outside dismisses
         HyprlandFocusGrab {
             id: grab
             windows: [win]
@@ -201,19 +206,18 @@ ShellRoot {
                                         fillMode: Image.PreserveAspectCrop
                                         asynchronous: true
                                         cache: true
+                                        // wallpaperDir is config-relative; retry once via the XDG fallback.
                                         onStatusChanged: {
-                                            if (status === Image.Error) {
-                                                let fb = "file://" + root.wallpaperFallbackDir + "/" + root.wallpapers[index];
-                                                if (source.toString() !== fb) source = fb;
-                                                else console.log("Wallpaper missing: " + root.wallpapers[index] + " tried " + root.wallpaperDir + " and " + root.wallpaperFallbackDir);
-                                            } else if (status === Image.Ready) {
-                                            }
+                                            if (status !== Image.Error) return
+                                            let fb = "file://" + root.wallpaperFallbackDir + "/" + root.wallpapers[index];
+                                            if (source.toString() !== fb) source = fb;
+                                            else console.log("Wallpaper missing: " + root.wallpapers[index] + " tried " + root.wallpaperDir + " and " + root.wallpaperFallbackDir);
                                         }
                                     }
                                     Text {
                                         visible: wpImg.status === Image.Error
                                         anchors.centerIn: parent
-                                        text: "🖼 " + root.wallpapers[index]
+                                        text: "\u{1f5bc} " + root.wallpapers[index]
                                         color: "#5a5a66"
                                         font.pixelSize: 9
                                         font.family: "Fira Sans"
@@ -267,10 +271,11 @@ ShellRoot {
                             Text { text: "↩ Esc to close  •  ⏎ to apply  •  Double-click card to apply"; color:"#6a6a70"; font.pixelSize:10; font.family:"Fira Sans"; elide: Text.ElideRight; Layout.fillWidth:true }
                         }
                     }
+                    // Close stays enabled during apply so a slow apply.sh cannot trap the window.
                     Rectangle {
-                        width: 140; height: 42; radius: 10; color: close2Ma.containsMouse ? root.closeBtnBgHover : root.closeBtnBg; border.color: root.subtleBorder; border.width:1; opacity: root.selectedIdx<0 || root.isApplying ? 0.5 : 1
+                        width: 140; height: 42; radius: 10; color: close2Ma.containsMouse ? root.closeBtnBgHover : root.closeBtnBg; border.color: root.subtleBorder; border.width:1
                         Behavior on color { ColorAnimation { duration: 200 } }
-                        Text { anchors.centerIn: parent; text: root.isApplying ? "Applying…" : "Close"; color:"#a0a0a8"; font.pixelSize:13; font.family:"Fira Sans"; font.bold:true }
+                        Text { anchors.centerIn: parent; text: "Close"; color:"#a0a0a8"; font.pixelSize:13; font.family:"Fira Sans"; font.bold:true }
                         MouseArea { id: close2Ma; anchors.fill: parent; hoverEnabled:true; cursorShape: Qt.PointingHandCursor; onClicked: quitApp() }
                     }
                     Rectangle {
@@ -284,7 +289,7 @@ ShellRoot {
                             Text { text: root.isApplying ? "Working…" : "Apply Full Theme"; color: root.selectedIdx<0 ? "#6a6a70" : root.accentFg; font.pixelSize:13; font.family:"Fira Sans"; font.bold:true }
                         }
                         MouseArea {
-                            id: applyMa; anchors.fill: parent; hoverEnabled:true; cursorShape: root.selectedIdx<0 ? Qt.ArrowCursor : Qt.PointingHandCursor; enabled: root.selectedIdx>=0 && !root.isApplying
+                            anchors.fill: parent; hoverEnabled:true; cursorShape: root.selectedIdx<0 ? Qt.ArrowCursor : Qt.PointingHandCursor; enabled: root.selectedIdx>=0 && !root.isApplying
                             onClicked: applyTheme(root.selectedIdx)
                         }
                     }

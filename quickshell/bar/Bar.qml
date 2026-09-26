@@ -1,7 +1,6 @@
-// Bar — quickshell top bar. Left: theme btn, quicklinks, window title.
-// Center: workspaces (1-5 persistent, sorted) + media toggle.
-// Right: volume (Pipewire + slider popup), network, cpu, mem, battery,
-// clock, tray, power. Accent + pills follow quickshell/accent.conf.
+// Top bar (theme button, workspaces, media, stats, tray, power).
+// Polled state lives on the Scope: one poll per subsystem, not one per screen.
+pragma ComponentBehavior: Bound
 import Quickshell
 import Quickshell.Io
 import Quickshell.Hyprland
@@ -14,174 +13,278 @@ import QtQuick.Layouts
 
 Scope {
     id: barScope
+
+    // Injected by shell.qml (untyped: directory imports carry no type info).
     property var theme
     property bool visible: true
 
-    readonly property string icoTheme: "󰏘"
-    readonly property string icoTerm: ""
-    readonly property string icoBrowser: ""
-    readonly property string icoFiles: ""
-    readonly property string icoPlay: ""
-    readonly property string icoPause: ""
-    readonly property string icoVol: ""
-    readonly property string icoMute: ""
-    readonly property string icoWifi: ""
-    readonly property string icoEth: ""
-    readonly property string icoOffline: ""
-    readonly property string icoCpu: ""
-    readonly property string icoMem: ""
-    readonly property string icoPower: ""
-    readonly property var icoBat: ["󰁺", "󰁻", "󰁼", "󰁽", "󰁾", "󰁿", "󰂀", "󰂁", "󰂂", "󰁹"]
-    readonly property string icoBatCharge: "󰂄"
-    readonly property string mediaToggleScript: (Quickshell.env("HOME") || "") + "/.config/quickshell/media-player/toggle.sh"
+    readonly property int barHeight: 38
+    readonly property string terminal: "ghostty"
 
-    // Pipewire live audio (preferred); polling fallback when null
-    property var audioSink: Pipewire.defaultAudioSink
-    property var sinkAudio: audioSink ? audioSink.audio : null
-    property bool pwReady: sinkAudio !== null && sinkAudio !== undefined
-    property bool volPopupOpen: false
+    readonly property string configDir: {
+        const xdg = Quickshell.env("XDG_CONFIG_HOME");
+        return (xdg || (Quickshell.env("HOME") || "") + "/.config") + "/quickshell";
+    }
+    readonly property string themeSelectorShell: barScope.configDir + "/themeselector/shell.qml"
+    readonly property string mediaToggleScript: barScope.configDir + "/media-player/toggle.sh"
 
-    // Bind the default sink so volume/mute are tracked.
-    // Without this the node stays unbound and audio stays null.
+    // Nerd Font glyphs as escapes so tooling cannot mangle the private-use codepoints.
+    readonly property string icoTheme: "\u{f03d8}"
+    readonly property string icoTerm: "\u{f120}"
+    readonly property string icoBrowser: "\u{f0ac}"
+    readonly property string icoFiles: "\u{f07c}"
+    readonly property string icoPlay: "\u{f04b}"
+    readonly property string icoPause: "\u{f04c}"
+    readonly property string icoVol: "\u{f028}"
+    readonly property string icoMute: "\u{f026}"
+    readonly property string icoWifi: "\u{f1eb}"
+    readonly property string icoEth: "\u{f0200}"
+    readonly property string icoOffline: "\u{f05aa}"
+    readonly property string icoCpu: "\u{f4bc}"
+    readonly property string icoMem: "\u{e266}"
+    readonly property string icoPower: "\u{f011}"
+    readonly property string icoDate: "\u{f073}"
+    readonly property string icoClock: "\u{f017}"
+    readonly property string icoBatCharge: "\u{f0084}"
+    readonly property var icoBat: ["\u{f007a}", "\u{f007b}", "\u{f007c}", "\u{f007d}", "\u{f007e}",
+        "\u{f007f}", "\u{f0080}", "\u{f0081}", "\u{f0082}", "\u{f0240}"]
+
+    readonly property var quicklinks: [
+        { icon: barScope.icoTerm, cmd: [barScope.terminal] },
+        { icon: barScope.icoBrowser, cmd: ["sh", "-c", "$HOME/zen-browser/zen/zen || $HOME/zen/zen || zen-browser"] },
+        { icon: barScope.icoFiles, cmd: ["dolphin"] }
+    ]
+
+    // Bind the default sink or its audio object never arrives.
     PwObjectTracker {
         objects: [Pipewire.defaultAudioSink]
     }
 
-    // Sorted workspace ids, 1-5 always present.
-    // Live IPC first, poll fallback. Re-tested on Hyprland 0.56.2 +
-    // quickshell 0.3.1: Hyprland.workspaces still exposes no count
-    // (even after refreshWorkspaces()), so the live path yields
-    // nothing and the hyprctl poll below is required.
-    function workspaceIds(pollIds) {
-        var ids = {};
-        var i;
-        try {
-            var ws = Hyprland.workspaces;
-            var n = (ws && ws.count !== undefined) ? ws.count : (ws && ws.values ? ws.values.length : 0);
-            for (i = 0; i < n; i++) {
-                var w = ws.get ? ws.get(i) : (ws.values ? ws.values[i] : ws[i]);
-                if (w && w.id !== undefined) ids[w.id] = true;
-            }
-        } catch (e) {}
-        for (i = 0; pollIds && i < pollIds.length; i++) ids[pollIds[i]] = true;
-        for (i = 1; i <= 5; i++) ids[i] = true;
-        var out = Object.keys(ids).map(function(k) { return parseInt(k, 10); });
-        out.sort(function(a, b) { return a - b; });
-        return out;
+    function _sinkAudio() {
+        const sink = Pipewire.defaultAudioSink;
+        if (!sink || !sink.ready) return null;
+        return sink.audio || null;
     }
+
+    property int volPollPct: -1   // -1 = unknown yet
+    property bool volPollMuted: false
+    readonly property int volPct: {
+        const audio = barScope._sinkAudio();
+        return audio === null ? barScope.volPollPct : Math.round(audio.volume * 100);
+    }
+    readonly property bool volMuted: {
+        const audio = barScope._sinkAudio();
+        return audio === null ? barScope.volPollMuted : audio.muted;
+    }
+    readonly property string volTxt: barScope.volPct < 0 ? "--%" : barScope.volPct + "%"
+
+    function _wpctl(args) {
+        Quickshell.execDetached(["wpctl"].concat(args));
+    }
+    function toggleMute() {
+        const audio = barScope._sinkAudio();
+        if (audio === null) barScope._wpctl(["set-mute", "@DEFAULT_AUDIO_SINK@", "toggle"]);
+        else audio.muted = !audio.muted;
+    }
+    function bumpVolume(delta) {
+        const audio = barScope._sinkAudio();
+        if (audio === null) {
+            barScope._wpctl(["set-volume", "@DEFAULT_AUDIO_SINK@", delta > 0 ? "5%+" : "5%-"]);
+            return;
+        }
+        audio.volume = Math.max(0, Math.min(1, audio.volume + delta));
+        if (audio.muted && delta > 0) audio.muted = false;
+    }
+    // Ids come from the hyprctl poll: Hyprland.workspaces is an empty model here,
+    // so the IPC path yields nothing. 1-5 stay pinned to keep the row stable.
+    function workspaceIds(pollIds) {
+        const ids = { 1: true, 2: true, 3: true, 4: true, 5: true };
+        for (let i = 0; i < pollIds.length; ++i) ids[pollIds[i]] = true;
+        return Object.keys(ids).map(Number).sort(function (a, b) { return a - b; });
+    }
+    // focusedWorkspace starts null and workspace 0 is falsy: check the id explicitly.
     function isFocusedWs(id, pollActive) {
-        try {
-            // live IPC wins when the compositor provides it
-            if (Hyprland.focusedWorkspace) return Hyprland.focusedWorkspace.id === id;
-        } catch (e) {}
+        const focused = Hyprland.focusedWorkspace;
+        if (focused && focused.id !== undefined) return focused.id === id;
         return pollActive === id;
     }
-    // Workspace switching must respect Hyprland's config provider:
-    // with configProvider: lua (default since 0.55) the legacy
-    // "workspace N" syntax is rejected, dispatch Lua instead.
+    // The Lua provider (default since 0.55) rejects the legacy "workspace N" syntax.
     function dispatchWorkspace(id) {
-        try {
-            if (Hyprland.usingLua) {
-                Hyprland.dispatch('hl.dsp.focus({ workspace = "' + id + '" })');
-                return;
+        if (Hyprland.usingLua) Hyprland.dispatch('hl.dsp.focus({ workspace = "' + id + '" })');
+        else Hyprland.dispatch("workspace " + id);
+    }
+
+    // Live first, poll as fallback: activeToplevel starts null until the first focus event.
+    readonly property string liveTitle: {
+        const title = (Hyprland.activeToplevel && Hyprland.activeToplevel.title) || "";
+        return title.slice(0, 60);
+    }
+    property string pollTitle: ""
+    property var pollWsIds: []
+    property int pollActiveWs: -1
+    readonly property string winTitle: barScope.liveTitle !== "" ? barScope.liveTitle : barScope.pollTitle
+
+    function _autoPlayer() {
+        const players = Mpris.players.values;
+        if (!players || players.length === 0) return null;
+        for (let i = 0; i < players.length; ++i) {
+            if (players[i].isPlaying) return players[i];
+        }
+        return players[0];
+    }
+    readonly property var mediaPlayer: barScope._autoPlayer()
+
+    property int cpuPct: -1
+    property int memPct: -1
+    property string netTxt: ""
+    property bool netDown: false
+    property int batPct: -1
+    property string batState: ""
+    readonly property bool batLow: barScope.batPct >= 0 && barScope.batPct <= 15
+        && barScope.batState !== "Charging"
+    // ceil(n/10)-1 so the bucket matches the number shown; charging wins over fill level.
+    readonly property string batIcon: barScope.batState === "Charging"
+        ? barScope.icoBatCharge
+        : barScope.icoBat[Math.max(0, Math.min(9, Math.ceil(barScope.batPct / 10) - 1))]
+
+    // One process per subsystem so a slow tool (nmcli) never holds up the fast ones.
+    Process {
+        id: hyprProc
+        // Single JSON line so "|" or newlines in titles round-trip.
+        command: ["bash", "-c", "python3 -c '\nimport json, subprocess\ndef j(*a):\n    try:\n        return json.loads(subprocess.check_output(a, text=True, timeout=2))\n    except Exception:\n        return {}\nprint(json.dumps({\"ws\": sorted(w[\"id\"] for w in j(\"hyprctl\", \"workspaces\", \"-j\") if \"id\" in w), \"active\": j(\"hyprctl\", \"activeworkspace\", \"-j\").get(\"id\", -1), \"title\": (j(\"hyprctl\", \"activewindow\", \"-j\").get(\"title\") or \"\")[:60]}))\n' 2>/dev/null"]
+        stdout: StdioCollector { onStreamFinished: barScope._hyprSample(text.trim()) }
+    }
+    Process {
+        id: statProc
+        // jiffies are diffed here, so the two reads must be a poll apart.
+        command: ["bash", "-c", "awk '/^cpu /{u=$2+$4; t=$2+$3+$4+$5+$6+$7+$8} /^MemTotal:/{mt=$2} /^MemAvailable:/{ma=$2} END{printf \"%d %d %d\\n\", u, t, (mt?int((mt-ma)*100/mt):0)}' /proc/stat /proc/meminfo"]
+        stdout: StdioCollector { onStreamFinished: barScope._statSample(text.trim()) }
+    }
+    Process {
+        id: hwProc
+        // Line 1: active nmcli connection. Line 2: "capacity:status".
+        // System batteries only (scope=System): peripheral "Batteries" (e.g. a wireless
+        // mouse) must not drive the pill, so towers show none. No scope attr: accept.
+        command: ["bash", "-c", "nmcli -t -f TYPE,STATE,NAME c show --active 2>/dev/null | grep -m1 ':activated' || echo 'none:disconnected:'; b=''; for d in /sys/class/power_supply/*/; do [ \"$(cat \"$d/type\" 2>/dev/null)\" = Battery ] || continue; s=\"$(cat \"$d/scope\" 2>/dev/null)\"; { [ -z \"$s\" ] || [ \"$s\" = System ]; } || continue; b=\"${d%/}\"; break; done; c=$(cat \"$b/capacity\" 2>/dev/null); s=$(cat \"$b/status\" 2>/dev/null); echo \"${c:-}:${s:-}\""]
+        stdout: StdioCollector { onStreamFinished: barScope._hwSample(text.trim()) }
+    }
+    Process {
+        id: volProc
+        command: ["bash", "-c", "wpctl get-volume @DEFAULT_AUDIO_SINK@ 2>/dev/null || pactl get-sink-volume @DEFAULT_SINK@ 2>/dev/null | head -n1"]
+        stdout: StdioCollector { onStreamFinished: barScope._volSample(text.trim()) }
+    }
+
+    function _startPolling() {
+        hyprProc.running = true;
+        statProc.running = true;
+        hwProc.running = true;
+        volProc.running = true;
+    }
+    Component.onCompleted: barScope._startPolling()
+
+    Timer { interval: 1000; repeat: true; running: barScope.visible; onTriggered: hyprProc.running = true }
+    Timer { interval: 2000; repeat: true; running: barScope.visible; onTriggered: statProc.running = true }
+    // nmcli is by far the slowest call; 5s is plenty.
+    Timer { interval: 5000; repeat: true; running: barScope.visible; onTriggered: hwProc.running = true }
+    Timer {
+        interval: 2000; repeat: true; running: barScope.visible
+        onTriggered: { if (barScope._sinkAudio() === null) volProc.running = true; }
+    }
+
+    function _hyprSample(line) {
+        let sample;
+        try { sample = JSON.parse(line); } catch (err) { return; }
+        if (Array.isArray(sample.ws)) barScope.pollWsIds = sample.ws;
+        if (typeof sample.active === "number") barScope.pollActiveWs = sample.active;
+        if (typeof sample.title === "string") barScope.pollTitle = sample.title;
+    }
+    property var _prevCpu: null
+    function _statSample(line) {
+        const p = line.split(/\s+/);
+        if (p.length < 3) return;
+        const busy = parseFloat(p[0]);
+        const total = parseFloat(p[1]);
+        if (!isNaN(busy) && !isNaN(total)) {
+            if (barScope._prevCpu !== null) {
+                const dBusy = busy - barScope._prevCpu[0];
+                const dTotal = total - barScope._prevCpu[1];
+                if (dTotal > 0) barScope.cpuPct = Math.round(dBusy / dTotal * 100);
             }
-        } catch (e) {}
-        Hyprland.dispatch("workspace " + id);
+            barScope._prevCpu = [busy, total];
+        }
+        const mem = parseInt(p[2], 10);
+        if (!isNaN(mem)) barScope.memPct = mem;
+    }
+    function _hwSample(text) {
+        const lines = text.split("\n");
+        if (lines.length > 0) barScope._netSample(lines[0].trim());
+        if (lines.length > 1) barScope._batSample(lines[1].trim());
+    }
+    function _netSample(line) {
+        // nmcli terse output is "TYPE:STATE:NAME" with ':' escaped in values.
+        const m = /^(.*?):([^:]*):(.*)$/.exec(line);
+        const type = m ? m[1] : "";
+        const state = m ? m[2] : "";
+        const name = m ? m[3].replace(/\\:/g, ":") : "";
+        if (state !== "activated") {
+            barScope.netTxt = barScope.icoOffline + "  off";
+            barScope.netDown = true;
+        } else if (/^wifi/.test(type)) {
+            barScope.netTxt = barScope.icoWifi + "  " + name.slice(0, 10);
+            barScope.netDown = false;
+        } else {
+            barScope.netTxt = barScope.icoEth + "  " + (name.slice(0, 10) || "up");
+            barScope.netDown = false;
+        }
+    }
+    function _batSample(line) {
+        const p = line.split(":");
+        const cap = parseInt(p[0], 10);
+        if (isNaN(cap)) {
+            barScope.batPct = -1;
+            barScope.batState = "";
+            return;
+        }
+        barScope.batPct = cap;
+        barScope.batState = (p[1] || "").trim();
+    }
+    function _volSample(line) {
+        const muted = /muted/i.test(line);
+        const m = /(\d+)%/.exec(line) || /Volume:\s*([\d.]+)/.exec(line);
+        barScope.volPollMuted = muted;
+        if (m === null) {
+            barScope.volPollPct = -1;
+            return;
+        }
+        const pct = m[1].indexOf(".") >= 0 ? Math.round(parseFloat(m[1]) * 100) : parseInt(m[1], 10);
+        barScope.volPollPct = muted ? 0 : pct;
+    }
+
+    // An id resolves to the first instance: pass the window in or multi-monitor menus land on the wrong bar.
+    function _openTrayMenu(item, window, mouseArea) {
+        const pos = mouseArea.mapToItem(window.contentItem, mouseArea.width / 2, mouseArea.height);
+        item.display(window, Math.round(pos.x), Math.round(pos.y));
     }
 
     Variants {
         model: Quickshell.screens
         PanelWindow {
-            id: win
+            id: barPanel
             required property var modelData
             screen: modelData
             visible: barScope.visible
 
             anchors { top: true; left: true; right: true }
-            implicitHeight: 38
-            exclusiveZone: barScope.visible ? 38 : 0
+            implicitHeight: barScope.barHeight
+            exclusiveZone: barScope.visible ? barScope.barHeight : 0
             color: "transparent"
 
-            property string cpuTxt: " --%"
-            property string memTxt: " --%"
-            property string netTxt: " --%"
-            property bool netDown: false
-            property string batTxt: ""
-            property string batIcon: ""
-            property bool batLow: false
-            // polling fallback only (Pipewire preferred)
-            property string volPollTxt: "--%"
-            property bool volPollMuted: false
-            // live title: event-driven via Hyprland IPC (instant on focus
-            // change AND in-window title change, e.g. browser tabs).
-            // Re-tested on Hyprland 0.56.2 + quickshell 0.3.1:
-            // activeToplevel works but starts null until the first
-            // focus event (refreshToplevels() does not seed it),
-            // so the hyprctl poll seeds the title at startup.
-            property string liveTitle: {
-                var t = (Hyprland.activeToplevel && Hyprland.activeToplevel.title) || "";
-                return t.slice(0, 60);
-            }
-            property string pollTitle: ""
-            property var pollWsIds: []
-            property int pollActiveWs: -1
-            property string winTitle: liveTitle !== "" ? liveTitle : pollTitle
-            // live player: re-evaluates when Mpris players change
-            property var mediaPlayer: barScope._autoPlayer()
-
-            // live volume display: Pipewire wins, else poll result
-            property string volTxt: {
-                if (barScope.pwReady) return Math.round(barScope.sinkAudio.volume * 100) + "%";
-                return win.volPollTxt;
-            }
-            property bool volMuted: {
-                if (barScope.pwReady) return barScope.sinkAudio.muted;
-                return win.volPollMuted;
-            }
-
             SystemClock { id: clock; precision: SystemClock.Seconds }
-
-            Process {
-                id: cpuProc
-                command: ["bash", "-c", "grep 'cpu ' /proc/stat | awk '{u=$2+$4; t=$2+$3+$4+$5+$6+$7+$8; print u\" \"t}'"]
-                stdout: StdioCollector { onStreamFinished: barScope._cpuSample(text.trim(), win) }
-            }
-            Process {
-                id: memProc
-                command: ["bash", "-c", "LC_ALL=C free | awk '/Mem:/ {printf \"%d\", $3/$2*100}'"]
-                stdout: StdioCollector { onStreamFinished: win.memTxt = barScope.icoMem + " " + text.trim() + "%" }
-            }
-            Process {
-                id: netProc
-                command: ["bash", "-c", "nmcli -t -f TYPE,STATE,NAME c show --active 2>/dev/null | grep -m1 ':activated' || echo 'none:disconnected:'"]
-                stdout: StdioCollector { onStreamFinished: barScope._netSample(text.trim(), win) }
-            }
-            Process {
-                id: batProc
-                command: ["bash", "-c", "c=$(cat /sys/class/power_supply/BAT*/capacity 2>/dev/null | head -n1); s=$(cat /sys/class/power_supply/BAT*/status 2>/dev/null | head -n1); echo \"${c:-}:${s:-}\""]
-                stdout: StdioCollector { onStreamFinished: barScope._batSample(text.trim(), win) }
-            }
-            Process {
-                id: volProc
-                command: ["bash", "-c", "wpctl get-volume @DEFAULT_AUDIO_SINK@ 2>/dev/null || pactl get-sink-volume @DEFAULT_SINK@ 2>/dev/null | head -n1"]
-                stdout: StdioCollector { onStreamFinished: barScope._volSample(text.trim(), win) }
-            }
-            // one poll covers title + workspaces + highlight (1s)
-            Process {
-                id: stateProc
-                command: ["bash", "-c", "python3 -c '\nimport json, subprocess\ntry:\n    ws = json.loads(subprocess.check_output([\"hyprctl\", \"workspaces\", \"-j\"], text=True))\n    ids = sorted(w[\"id\"] for w in ws)\nexcept Exception:\n    ids = []\ntry:\n    aws = json.loads(subprocess.check_output([\"hyprctl\", \"activeworkspace\", \"-j\"], text=True))\n    active = aws.get(\"id\", -1)\nexcept Exception:\n    active = -1\ntry:\n    win = json.loads(subprocess.check_output([\"hyprctl\", \"activewindow\", \"-j\"], text=True))\n    title = (win.get(\"title\") or \"\")[:60]\nexcept Exception:\n    title = \"\"\nprint(str(active) + \"|\" + \" \".join(map(str, ids)) + \"|\" + title)\n' 2>/dev/null || echo '-1||'"]
-                stdout: StdioCollector { onStreamFinished: barScope._stateSample(text.trim(), win) }
-            }
-            Timer { interval: 2000; running: true; repeat: true; onTriggered: { cpuProc.running = true; memProc.running = true; if (!barScope.pwReady) volProc.running = true; } }
-            Timer { interval: 5000; running: true; repeat: true; onTriggered: { netProc.running = true; batProc.running = true; } }
-            Timer { interval: 1000; running: true; repeat: true; onTriggered: stateProc.running = true }
-            Component.onCompleted: { cpuProc.running = true; memProc.running = true; netProc.running = true; batProc.running = true; volProc.running = true; stateProc.running = true; }
 
             Rectangle {
                 anchors.fill: parent
                 color: "transparent"
 
-                // ---------- LEFT ----------
                 RowLayout {
                     anchors.left: parent.left
                     anchors.leftMargin: 10
@@ -190,36 +293,32 @@ Scope {
 
                     Rectangle {
                         Layout.preferredHeight: 30; Layout.preferredWidth: 96; radius: barScope.theme.radius
-                        color: appHover.containsMouse ? barScope.theme.moduleBgHover : barScope.theme.moduleBg
+                        color: themeHover.containsMouse ? barScope.theme.moduleBgHover : barScope.theme.moduleBg
                         Text { anchors.centerIn: parent; text: barScope.icoTheme + "  Theme"; color: barScope.theme.textCol; font.family: barScope.theme.fontFam; font.pixelSize: 13; font.bold: true }
-                        MouseArea { id: appHover; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
-                            onClicked: Quickshell.execDetached(["qs", "-p", (Quickshell.env("HOME") || "") + "/.config/quickshell/themeselector/shell.qml"]) }
+                        MouseArea { id: themeHover; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
+                            onClicked: Quickshell.execDetached(["qs", "-p", barScope.themeSelectorShell]) }
                     }
                     Repeater {
-                        model: [
-                            { icon: barScope.icoTerm, cmd: ["ghostty"] },
-                            { icon: barScope.icoBrowser, cmd: ["sh", "-c", "$HOME/zen-browser/zen/zen || $HOME/zen/zen || zen-browser"] },
-                            { icon: barScope.icoFiles, cmd: ["dolphin"] }
-                        ]
+                        model: barScope.quicklinks
                         delegate: Rectangle {
+                            id: quicklink
                             required property var modelData
                             Layout.preferredHeight: 30; Layout.preferredWidth: 42; radius: barScope.theme.radius
-                            color: qlHover.containsMouse ? barScope.theme.moduleBgHover : barScope.theme.moduleBg
-                            Text { anchors.centerIn: parent; text: parent.modelData.icon; color: barScope.theme.textCol; font.family: barScope.theme.fontFam; font.pixelSize: 15 }
-                            MouseArea { id: qlHover; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
-                                onClicked: Quickshell.execDetached(parent.modelData.cmd) }
+                            color: quicklinkHover.containsMouse ? barScope.theme.moduleBgHover : barScope.theme.moduleBg
+                            Text { anchors.centerIn: parent; text: quicklink.modelData.icon; color: barScope.theme.textCol; font.family: barScope.theme.fontFam; font.pixelSize: 15 }
+                            MouseArea { id: quicklinkHover; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
+                                onClicked: Quickshell.execDetached(quicklink.modelData.cmd) }
                         }
                     }
                     Rectangle {
-                        visible: win.winTitle !== ""
+                        visible: barScope.winTitle !== ""
                         Layout.preferredHeight: 30; Layout.maximumWidth: 360; Layout.preferredWidth: titleTxt.implicitWidth + 28; radius: barScope.theme.radius
                         color: barScope.theme.moduleBg
                         Text { id: titleTxt; anchors.fill: parent; anchors.leftMargin: 14; anchors.rightMargin: 14; verticalAlignment: Text.AlignVCenter
-                            text: win.winTitle; color: barScope.theme.textCol; font.family: barScope.theme.fontFam; font.pixelSize: 12; elide: Text.ElideRight }
+                            text: barScope.winTitle; color: barScope.theme.textCol; font.family: barScope.theme.fontFam; font.pixelSize: 12; elide: Text.ElideRight }
                     }
                 }
 
-                // ---------- CENTER ----------
                 RowLayout {
                     anchors.horizontalCenter: parent.horizontalCenter
                     anchors.verticalCenter: parent.verticalCenter
@@ -230,12 +329,11 @@ Scope {
                         Layout.preferredWidth: wsRow.implicitWidth + 8
                         RowLayout { id: wsRow; anchors.centerIn: parent; spacing: 4
                             Repeater {
-                                model: barScope.workspaceIds(win.pollWsIds)
+                                model: barScope.workspaceIds(barScope.pollWsIds)
                                 delegate: Rectangle {
                                     required property var modelData
-                                    required property int index
                                     property int wsId: modelData
-                                    property bool isActive: barScope.isFocusedWs(wsId, win.pollActiveWs)
+                                    property bool isActive: barScope.isFocusedWs(wsId, barScope.pollActiveWs)
                                     Layout.preferredHeight: 26; Layout.preferredWidth: isActive ? 34 : 28; radius: 9
                                     color: isActive ? barScope.theme.accent : "transparent"
                                     Text { anchors.centerIn: parent; text: wsId; color: isActive ? barScope.theme.accentFg : barScope.theme.textCol; font.family: barScope.theme.fontFam; font.pixelSize: 13; font.bold: isActive }
@@ -248,13 +346,17 @@ Scope {
                     Rectangle {
                         Layout.preferredHeight: 30; Layout.preferredWidth: 42; radius: barScope.theme.radius
                         color: mediaHover.containsMouse ? barScope.theme.moduleBgHover : barScope.theme.moduleBg
-                        Text { anchors.centerIn: parent; text: (win.mediaPlayer && win.mediaPlayer.isPlaying) ? barScope.icoPause : barScope.icoPlay; color: barScope.theme.textCol; font.pixelSize: 13 }
+                        // left click: popup, right click: play/pause
+                        Text { anchors.centerIn: parent; text: (barScope.mediaPlayer && barScope.mediaPlayer.isPlaying) ? barScope.icoPause : barScope.icoPlay; color: barScope.theme.textCol; font.family: barScope.theme.fontFam; font.pixelSize: 13 }
                         MouseArea { id: mediaHover; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
                             acceptedButtons: Qt.LeftButton | Qt.RightButton
                             onClicked: mouse => {
                                 if (mouse.button === Qt.RightButton) {
-                                    var p = win.mediaPlayer;
-                                    if (p) { if (p.canTogglePlaying) p.togglePlaying(); else if (p.isPlaying) p.pause(); else p.play(); }
+                                    const player = barScope.mediaPlayer;
+                                    if (!player) return;
+                                    if (player.canTogglePlaying) player.togglePlaying();
+                                    else if (player.isPlaying) player.pause();
+                                    else player.play();
                                 } else {
                                     Quickshell.execDetached(["bash", barScope.mediaToggleScript]);
                                 }
@@ -262,69 +364,70 @@ Scope {
                     }
                 }
 
-                // ---------- RIGHT ----------
                 RowLayout {
                     anchors.right: parent.right
                     anchors.rightMargin: 10
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: 6
 
-                    // volume: left = mute toggle, right = mixer, wheel = level, popup slider
+                    // volume: left = mute toggle, right = mixer, wheel = level
                     Rectangle {
                         Layout.preferredHeight: 30; Layout.preferredWidth: 78; radius: barScope.theme.radius
                         color: volHover.containsMouse ? barScope.theme.moduleBgHover : barScope.theme.moduleBg
-                        Text { anchors.centerIn: parent; text: (win.volMuted ? barScope.icoMute : barScope.icoVol) + " " + win.volTxt; color: win.volMuted ? barScope.theme.textSub : barScope.theme.textCol; font.family: barScope.theme.fontFam; font.pixelSize: 12 }
+                        Text { anchors.centerIn: parent; text: (barScope.volMuted ? barScope.icoMute : barScope.icoVol) + " " + barScope.volTxt; color: barScope.volMuted ? barScope.theme.textSub : barScope.theme.textCol; font.family: barScope.theme.fontFam; font.pixelSize: 12 }
                         MouseArea { id: volHover; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
                             acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
                             onClicked: mouse => {
-                                if (mouse.button === Qt.RightButton || mouse.button === Qt.MiddleButton) {
-                                    Quickshell.execDetached(["pwvucontrol"]);
-                                } else {
+                                if (mouse.button === Qt.LeftButton) {
                                     barScope.toggleMute();
-                                    barScope.volPopupOpen = true;
-                                    volPopupTimer.restart();
+                                } else {
+                                    Quickshell.execDetached(["pwvucontrol"]);
                                 }
                             }
                             onWheel: wheel => {
                                 barScope.bumpVolume(wheel.angleDelta.y > 0 ? 0.05 : -0.05);
-                                barScope.volPopupOpen = true;
-                                volPopupTimer.restart();
                             } }
                     }
                     Rectangle {
-                        Layout.preferredHeight: 30; Layout.preferredWidth: 78; radius: barScope.theme.radius
+                        Layout.preferredHeight: 30; Layout.maximumWidth: 150; Layout.preferredWidth: netTxt.implicitWidth + 28; radius: barScope.theme.radius
                         color: netHover.containsMouse ? barScope.theme.moduleBgHover : barScope.theme.moduleBg
-                        Text { anchors.centerIn: parent; text: win.netTxt; color: win.netDown ? barScope.theme.red : barScope.theme.textCol; font.family: barScope.theme.fontFam; font.pixelSize: 12 }
+                        Text { id: netTxt; anchors.fill: parent; anchors.leftMargin: 14; anchors.rightMargin: 14; verticalAlignment: Text.AlignVCenter
+                            text: barScope.netTxt; color: barScope.netDown ? barScope.theme.red : barScope.theme.textCol; font.family: barScope.theme.fontFam; font.pixelSize: 12; elide: Text.ElideRight }
                         MouseArea { id: netHover; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
-                            onClicked: Quickshell.execDetached(["ghostty", "-e", "nmtui"]) }
+                            onClicked: Quickshell.execDetached([barScope.terminal, "-e", "nmtui"]) }
                     }
                     Rectangle {
-                        Layout.preferredHeight: 30; Layout.preferredWidth: 78; radius: barScope.theme.radius; color: barScope.theme.moduleBg
-                        Text { anchors.centerIn: parent; text: win.cpuTxt; color: barScope.theme.textCol; font.family: barScope.theme.fontFam; font.pixelSize: 12 }
-                        MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: Quickshell.execDetached(["ghostty", "-e", "btop"]) }
+                        Layout.preferredHeight: 30; Layout.preferredWidth: 78; radius: barScope.theme.radius
+                        color: cpuHover.containsMouse ? barScope.theme.moduleBgHover : barScope.theme.moduleBg
+                        Text { anchors.centerIn: parent; text: barScope.icoCpu + "  " + (barScope.cpuPct < 0 ? "--%" : barScope.cpuPct + "%"); color: barScope.theme.textCol; font.family: barScope.theme.fontFam; font.pixelSize: 12 }
+                        MouseArea { id: cpuHover; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
+                            onClicked: Quickshell.execDetached([barScope.terminal, "-e", "btop"]) }
                     }
                     Rectangle {
-                        Layout.preferredHeight: 30; Layout.preferredWidth: 68; radius: barScope.theme.radius; color: barScope.theme.moduleBg
-                        Text { anchors.centerIn: parent; text: win.memTxt; color: barScope.theme.textCol; font.family: barScope.theme.fontFam; font.pixelSize: 12 }
-                        MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: Quickshell.execDetached(["ghostty", "-e", "btop"]) }
+                        Layout.preferredHeight: 30; Layout.preferredWidth: 68; radius: barScope.theme.radius
+                        color: memHover.containsMouse ? barScope.theme.moduleBgHover : barScope.theme.moduleBg
+                        Text { anchors.centerIn: parent; text: barScope.icoMem + "  " + (barScope.memPct < 0 ? "--%" : barScope.memPct + "%"); color: barScope.theme.textCol; font.family: barScope.theme.fontFam; font.pixelSize: 12 }
+                        MouseArea { id: memHover; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
+                            onClicked: Quickshell.execDetached([barScope.terminal, "-e", "btop"]) }
                     }
                     Rectangle {
-                        visible: win.batTxt !== ""
+                        visible: barScope.batPct >= 0
                         Layout.preferredHeight: 30; Layout.preferredWidth: 72; radius: barScope.theme.radius; color: barScope.theme.moduleBg
-                        Text { anchors.centerIn: parent; text: win.batIcon + " " + win.batTxt; color: win.batLow ? barScope.theme.red : barScope.theme.textCol; font.family: barScope.theme.fontFam; font.pixelSize: 12 }
+                        Text { anchors.centerIn: parent; text: barScope.batIcon + " " + barScope.batPct + "%"; color: barScope.batLow ? barScope.theme.red : barScope.theme.textCol; font.family: barScope.theme.fontFam; font.pixelSize: 12 }
                     }
                     Rectangle {
-                        Layout.preferredHeight: 30; Layout.preferredWidth: 196; radius: barScope.theme.radius; color: barScope.theme.moduleBg
-                        Text { anchors.centerIn: parent; text: "  " + Qt.formatDateTime(clock.date, "ddd MMM dd     hh:mm"); color: barScope.theme.textCol; font.family: barScope.theme.fontFam; font.pixelSize: 12; font.bold: true }
+                        Layout.preferredHeight: 30; Layout.preferredWidth: 214; radius: barScope.theme.radius; color: barScope.theme.moduleBg
+                        Text { anchors.centerIn: parent; text: barScope.icoDate + "  " + Qt.formatDateTime(clock.date, "ddd MMM dd") + "    " + barScope.icoClock + "  " + Qt.formatDateTime(clock.date, "hh:mm"); color: barScope.theme.textCol; font.family: barScope.theme.fontFam; font.pixelSize: 12; font.bold: true }
                     }
                     Rectangle {
                         visible: trayRow.count > 0
                         Layout.preferredHeight: 30; Layout.preferredWidth: trayRow.implicitWidth + 16; radius: barScope.theme.radius; color: barScope.theme.moduleBg
                         RowLayout { id: trayRow; anchors.centerIn: parent; spacing: 4
-                            property int count: (typeof SystemTray !== "undefined" && SystemTray.items) ? SystemTray.items.values.length : 0
+                            readonly property int count: SystemTray.items.values.length
                             Repeater {
-                                model: (typeof SystemTray !== "undefined" && SystemTray.items) ? SystemTray.items.values : []
+                                model: SystemTray.items.values
                                 delegate: Rectangle {
+                                    id: trayItem
                                     required property var modelData
                                     Layout.preferredWidth: 24; Layout.preferredHeight: 24; radius: 7
                                     color: trayMouse.containsMouse ? barScope.theme.moduleBgHover : "transparent"
@@ -332,13 +435,14 @@ Scope {
                                         id: trayIcon
                                         anchors.centerIn: parent
                                         width: 16; height: 16
-                                        source: parent.modelData.icon
+                                        source: trayItem.modelData.icon
                                         smooth: true
                                     }
+                                    // SNI apps that ship no icon fall back to initials
                                     Text {
                                         anchors.centerIn: parent
                                         visible: trayIcon.status !== Image.Ready && trayIcon.status !== Image.Loading
-                                        text: (parent.modelData.title || parent.modelData.id || "?").charAt(0).toUpperCase()
+                                        text: (trayItem.modelData.title || trayItem.modelData.id || "?").charAt(0).toUpperCase()
                                         color: barScope.theme.textSub; font.family: barScope.theme.fontFam; font.pixelSize: 11; font.bold: true
                                     }
                                     MouseArea {
@@ -348,17 +452,13 @@ Scope {
                                         cursorShape: Qt.PointingHandCursor
                                         acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
                                         onClicked: mouse => {
-                                            var item = parent.modelData;
-                                            if (!item) return;
-                                            if (mouse.button === Qt.LeftButton) {
-                                                if (item.onlyMenu && item.hasMenu) barScope._openTrayMenu(item, trayMouse, win);
-                                                else item.activate();
-                                            } else if (mouse.button === Qt.MiddleButton) {
-                                                item.secondaryActivate();
-                                            } else {
-                                                if (item.hasMenu) barScope._openTrayMenu(item, trayMouse, win);
+                                            const item = trayItem.modelData;
+                                            if (mouse.button === Qt.MiddleButton) item.secondaryActivate();
+                                            else if (mouse.button === Qt.RightButton) {
+                                                if (item.hasMenu) barScope._openTrayMenu(item, barPanel, trayMouse);
                                                 else item.secondaryActivate();
-                                            }
+                                            } else if (item.onlyMenu && item.hasMenu) barScope._openTrayMenu(item, barPanel, trayMouse);
+                                            else item.activate();
                                         }
                                     }
                                 }
@@ -367,175 +467,13 @@ Scope {
                     }
                     Rectangle {
                         Layout.preferredHeight: 30; Layout.preferredWidth: 42; radius: barScope.theme.radius
-                        color: exitHover.containsMouse ? Qt.rgba(224 / 255, 108 / 255, 117 / 255, 0.15) : barScope.theme.moduleBg
-                        Text { anchors.centerIn: parent; text: barScope.icoPower; color: exitHover.containsMouse ? barScope.theme.red : barScope.theme.textSub; font.pixelSize: 14 }
+                        color: exitHover.containsMouse ? Qt.alpha(barScope.theme.red, 0.15) : barScope.theme.moduleBg
+                        Text { anchors.centerIn: parent; text: barScope.icoPower; color: exitHover.containsMouse ? barScope.theme.red : barScope.theme.textSub; font.family: barScope.theme.fontFam; font.pixelSize: 14 }
                         MouseArea { id: exitHover; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
                             onClicked: Quickshell.execDetached(["wlogout", "-b", "3"]) }
                     }
                 }
             }
-
-            // auto-hide timer for the volume popup
-            Timer { id: volPopupTimer; interval: 2500; onTriggered: barScope.volPopupOpen = false }
-        }
-    }
-
-    // Volume slider popup in its own Variants: a hidden PanelWindow must not
-    // share a Variants with the bar — quickshell then maps neither, silently.
-    Variants {
-        model: Quickshell.screens
-        // volume slider popup (primary screen only, below the bar)
-        PanelWindow {
-            required property var modelData
-            screen: modelData
-            visible: barScope.visible && barScope.volPopupOpen && modelData === Quickshell.screens[0]
-            anchors { top: true; right: true }
-            margins { top: 46; right: 10 }
-            implicitWidth: 220
-            implicitHeight: 52
-            exclusiveZone: 0
-            exclusionMode: ExclusionMode.Ignore
-            color: "transparent"
-
-            Rectangle {
-                anchors.fill: parent
-                radius: barScope.theme.radius
-                color: Qt.rgba(20 / 255, 20 / 255, 22 / 255, 0.95)
-                border.color: Qt.alpha(barScope.theme.accent, 0.5)
-                border.width: 1
-                RowLayout {
-                    anchors.fill: parent
-                    anchors.leftMargin: 12; anchors.rightMargin: 12
-                    spacing: 10
-                    Text {
-                        text: barScope.pwReady && barScope.sinkAudio.muted ? barScope.icoMute : barScope.icoVol
-                        color: barScope.theme.textCol; font.pixelSize: 14
-                        MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: barScope.toggleMute() }
-                    }
-                    Rectangle {
-                        id: sliderBg
-                        Layout.fillWidth: true; Layout.preferredHeight: 6; radius: 3
-                        color: Qt.rgba(255, 255, 255, 0.12)
-                        Rectangle {
-                            width: parent.width * (barScope.pwReady ? barScope.sinkAudio.volume : 0)
-                            height: parent.height; radius: 3
-                            color: barScope.theme.accent
-                        }
-                        MouseArea {
-                            anchors.fill: parent; cursorShape: Qt.PointingHandCursor
-                            onPressed: mouse => barScope.setVolume(mouse.x / sliderBg.width)
-                            onPositionChanged: mouse => { if (pressed) barScope.setVolume(mouse.x / sliderBg.width); }
-                        }
-                    }
-                    Text {
-                        text: (barScope.pwReady ? Math.round(barScope.sinkAudio.volume * 100) : -1) >= 0 ? Math.round(barScope.sinkAudio.volume * 100) + "%" : "--"
-                        color: barScope.theme.textSub; font.family: barScope.theme.fontFam; font.pixelSize: 11
-                        Layout.preferredWidth: 36
-                    }
-                }
-            }
-        }
-    }
-
-    // ---- volume backends ----
-    function toggleMute() {
-        if (barScope.pwReady) {
-            barScope.sinkAudio.muted = !barScope.sinkAudio.muted;
-        } else {
-            Quickshell.execDetached(["wpctl", "set-mute", "@DEFAULT_AUDIO_SINK@", "toggle"]);
-        }
-    }
-    function bumpVolume(delta) {
-        if (barScope.pwReady) {
-            var v = Math.max(0, Math.min(1, barScope.sinkAudio.volume + delta));
-            barScope.sinkAudio.volume = v;
-            if (barScope.sinkAudio.muted && delta > 0) barScope.sinkAudio.muted = false;
-        } else {
-            var pct = delta > 0 ? "5%+" : "5%-";
-            Quickshell.execDetached(["wpctl", "set-volume", "@DEFAULT_AUDIO_SINK@", pct]);
-        }
-    }
-    function setVolume(ratio) {
-        var v = Math.max(0, Math.min(1, ratio));
-        if (barScope.pwReady) {
-            barScope.sinkAudio.volume = v;
-            if (barScope.sinkAudio.muted && v > 0) barScope.sinkAudio.muted = false;
-        } else {
-            Quickshell.execDetached(["wpctl", "set-volume", "@DEFAULT_AUDIO_SINK@", Math.round(v * 100) + "%"]);
-        }
-    }
-
-    // ---- poll parsers ----
-    property var _prevCpu: null
-    function _stateSample(line, win) {
-        // format: activeWsId|id id id|window title (title may contain |)
-        var i1 = line.indexOf("|");
-        if (i1 < 0) return;
-        var i2 = line.indexOf("|", i1 + 1);
-        if (i2 < 0) return;
-        win.pollActiveWs = parseInt(line.slice(0, i1), 10) || -1;
-        var ids = line.slice(i1 + 1, i2).trim();
-        win.pollWsIds = ids === "" ? [] : ids.split(/\s+/).map(function(x) { return parseInt(x, 10); });
-        win.pollTitle = line.slice(i2 + 1).trim();
-    }
-    function _cpuSample(line, win) {
-        var p = line.split(" ");
-        if (p.length < 2) return;
-        var u = parseFloat(p[0]), t = parseFloat(p[1]);
-        if (_prevCpu) {
-            var du = u - _prevCpu[0], dt = t - _prevCpu[1];
-            if (dt > 0) win.cpuTxt = barScope.icoCpu + "  " + Math.round(du / dt * 100) + "%";
-        }
-        _prevCpu = [u, t];
-    }
-    function _netSample(line, win) {
-        if (line.indexOf("wifi:activated") === 0) {
-            win.netTxt = barScope.icoWifi + "  " + (line.split(":")[2] || "wifi").slice(0, 10);
-            win.netDown = false;
-        } else if (line.indexOf("ethernet:activated") === 0 || line.indexOf("802-3-ethernet:activated") === 0) {
-            win.netTxt = barScope.icoEth + "  eth";
-            win.netDown = false;
-        } else if (line.indexOf("disconnected") >= 0 || line.indexOf("none:") === 0) {
-            win.netTxt = barScope.icoOffline + "  off";
-            win.netDown = true;
-        } else {
-            win.netTxt = barScope.icoEth + "  up";
-            win.netDown = false;
-        }
-    }
-    function _batSample(line, win) {
-        var p = line.split(":");
-        if (!p[0]) { win.batTxt = ""; return; }
-        var cap = parseInt(p[0], 10), st = (p[1] || "").trim();
-        win.batTxt = cap + "%";
-        win.batIcon = (st === "Charging") ? barScope.icoBatCharge : barScope.icoBat[Math.max(0, Math.min(9, Math.floor(cap / 10)))];
-        win.batLow = cap <= 15 && st !== "Charging";
-    }
-    function _volSample(line, win) {
-        var muted = /muted/i.test(line);
-        var m = /(\d+)%/.exec(line) || /Volume:\s*([\d.]+)/.exec(line);
-        win.volPollMuted = muted;
-        if (m) {
-            var v = m[1].indexOf(".") >= 0 ? Math.round(parseFloat(m[1]) * 100) : parseInt(m[1], 10);
-            win.volPollTxt = muted ? "muted" : v + "%";
-        } else {
-            win.volPollTxt = muted ? "muted" : "--%";
-        }
-    }
-    function _autoPlayer() {
-        if (typeof Mpris === "undefined" || !Mpris.players) return null;
-        var vals = Mpris.players.values;
-        if (!vals || vals.length === 0) return null;
-        for (var i = 0; i < vals.length; i++) if (vals[i].isPlaying) return vals[i];
-        return vals[0];
-    }
-    function _openTrayMenu(item, mouseArea, win) {
-        try {
-            var p = mouseArea.mapToItem(win.contentItem, mouseArea.width / 2, mouseArea.height);
-            item.display(win, Math.round(p.x), Math.round(p.y));
-        } catch (e) {
-            console.warn("tray menu failed for", item && (item.id || item.title), e);
-            try { item.secondaryActivate(); } catch (e2) {}
         }
     }
 }
