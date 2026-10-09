@@ -1,4 +1,3 @@
-//@ pragma UseQApplication
 pragma ComponentBehavior: Bound
 // One-shot app launcher (SUPER+R).
 import Quickshell
@@ -6,7 +5,6 @@ import Quickshell.Io
 import Quickshell.Hyprland
 import QtQuick
 import QtQuick.Layouts
-import QtQuick.Controls
 
 ShellRoot {
     id: root
@@ -222,6 +220,10 @@ ShellRoot {
     }
 
     Component.onCompleted: {
+        // Async mkdir: a launch within the first few milliseconds can race it
+        // and lose that history entry (saveHistory's setText fails silently
+        // while the directory does not exist yet). Self-heals on the next
+        // launch once the directory is there.
         Quickshell.execDetached(["mkdir", "-p", root.historyDir]);
         root.loadHistory();
         root.refilter();
@@ -263,7 +265,8 @@ ShellRoot {
 
         Item {
             anchors.fill: parent
-            Keys.onPressed: event => root.handleKey(event)
+            // No Keys handler here: the focused TextInput already routes
+            // keys to root.handleKey; unhandled keys bubble up unused.
         }
 
         Rectangle {

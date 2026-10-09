@@ -13,7 +13,8 @@ Item {
 
     readonly property string fontFam: "Fira Sans Semibold, sans-serif"
     // Private-use glyphs (play/pause/skip) always need the Nerd Font.
-    readonly property string iconFam: "Firacode Nerd Font, Fira Sans Semibold, sans-serif"
+    // Keep the family in sync with Theme.qml so glyph metrics match the bar.
+    readonly property string iconFam: "JetBrainsMono Nerd Font, Fira Sans Semibold, sans-serif"
 
     property string manualDbus: ""
 
@@ -211,7 +212,7 @@ Item {
                 spacing: 6
                 Text {
                     text: root.fmt(root.position) + " / " + (root.length > 0 ? root.fmt(root.length) : "--:--")
-                    font.family: "Firacode Nerd Font Mono, " + root.fontFam
+                    font.family: "JetBrainsMono Nerd Font Mono, " + root.fontFam
                     font.pixelSize: 10
                     color: "#a0a0a0"
                 }
@@ -290,6 +291,9 @@ Item {
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
+                    // Rectangle.enabled does not propagate to MouseArea:
+                    // repeat it here so clicks cannot hit a null player.
+                    enabled: root.hasPlayer && root.player.canGoPrevious
                     onClicked: root.player.previous()
                 }
             }
@@ -313,6 +317,8 @@ Item {
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
+                    // Rectangle.enabled does not propagate to MouseArea.
+                    enabled: root.hasPlayer
                     onClicked: {
                         if (root.player.canTogglePlaying) root.player.togglePlaying();
                         else if (root.isPlaying) root.player.pause();
@@ -340,6 +346,9 @@ Item {
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
+                    // Rectangle.enabled does not propagate to MouseArea:
+                    // repeat it here so clicks cannot hit a null player.
+                    enabled: root.hasPlayer && root.player.canGoNext
                     onClicked: root.player.next()
                 }
             }

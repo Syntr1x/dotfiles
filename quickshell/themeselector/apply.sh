@@ -29,11 +29,18 @@ name="${theme_names[$idx]}"
 wp="${wallpapers[$idx]}"
 color="${accent_colors[$idx]}"
 
-sed_escape() { printf '%s' "$1" | sed -e 's/[|&\\/]/\\&/g'; }
+# Escape every ERE metacharacter so names and paths round-trip
+# through grep -E and sed -E unharmed.
+sed_escape() { printf '%s' "$1" | sed -e 's#[][\\/.^$+?(){}|*-]#\\&#g'; }
 
 # Accent first so the bar follows live even if a later step fails.
+# Write via temp + mv: an in-place truncate would let the bar's FileView
+# watcher read a half-written (empty) file and flash the accent back to
+# the default until the next change event.
 mkdir -p "${accent_cfg%/*}"
-printf '# quickshell accent — written by themeselector apply.sh, watched live. Do not edit by hand.\naccent=%s\n' "$color" > "$accent_cfg"
+accent_tmp=$(mktemp "${accent_cfg%/*}/.accent.XXXXXX")
+printf '# quickshell accent — written by themeselector apply.sh, watched live. Do not edit by hand.\naccent=%s\n' "$color" > "$accent_tmp"
+mv -f "$accent_tmp" "$accent_cfg"
 
 # Comment the active line, normalise the list, then uncomment the theme (or append it).
 if [[ -f $theme_cfg ]]; then
@@ -49,7 +56,8 @@ else
     echo "ghostty config not found, skipping: $theme_cfg" >&2
 fi
 
-# Swap only the path line so per-monitor blocks survive; fresh stub only when missing.
+# Swap the path in every per-monitor block (a theme applies to all
+# monitors); a fresh stub is only written when no path line exists at all.
 mkdir -p "${wallpaper_cfg%/*}"
 if [[ -f $wallpaper_cfg ]] && grep -qE '^[[:space:]]*path[[:space:]]*=' "$wallpaper_cfg"; then
     esc_path=$(sed_escape "$wallpaper_dir/$wp")

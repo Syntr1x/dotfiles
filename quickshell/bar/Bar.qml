@@ -157,7 +157,8 @@ Scope {
     Process {
         id: statProc
         // jiffies are diffed here, so the two reads must be a poll apart.
-        command: ["bash", "-c", "awk '/^cpu /{u=$2+$4; t=$2+$3+$4+$5+$6+$7+$8} /^MemTotal:/{mt=$2} /^MemAvailable:/{ma=$2} END{printf \"%d %d %d\\n\", u, t, (mt?int((mt-ma)*100/mt):0)}' /proc/stat /proc/meminfo"]
+        // busy = user+nice+system; the total also counts steal (VMs/containers).
+        command: ["bash", "-c", "awk '/^cpu /{u=$2+$3+$4; t=$2+$3+$4+$5+$6+$7+$8+$9} /^MemTotal:/{mt=$2} /^MemAvailable:/{ma=$2} END{printf \"%d %d %d\\n\", u, t, (mt?int((mt-ma)*100/mt):0)}' /proc/stat /proc/meminfo"]
         stdout: StdioCollector { onStreamFinished: barScope._statSample(text.trim()) }
     }
     Process {
@@ -257,7 +258,9 @@ Scope {
             return;
         }
         const pct = m[1].indexOf(".") >= 0 ? Math.round(parseFloat(m[1]) * 100) : parseInt(m[1], 10);
-        barScope.volPollPct = muted ? 0 : pct;
+        // Keep the real level when muted — the mute icon already says so, and
+        // the live Pipewire path reports audio.volume regardless of muted.
+        barScope.volPollPct = pct;
     }
 
     // An id resolves to the first instance: pass the window in or multi-monitor menus land on the wrong bar.
@@ -286,6 +289,7 @@ Scope {
                 color: "transparent"
 
                 RowLayout {
+                    id: leftRow
                     anchors.left: parent.left
                     anchors.leftMargin: 10
                     anchors.verticalCenter: parent.verticalCenter
@@ -296,7 +300,8 @@ Scope {
                         color: themeHover.containsMouse ? barScope.theme.moduleBgHover : barScope.theme.moduleBg
                         Text { anchors.centerIn: parent; text: barScope.icoTheme + "  Theme"; color: barScope.theme.textCol; font.family: barScope.theme.fontFam; font.pixelSize: 13; font.bold: true }
                         MouseArea { id: themeHover; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
-                            onClicked: Quickshell.execDetached(["qs", "-p", barScope.themeSelectorShell]) }
+                            // -n: a second click must not stack another theme selector window.
+                            onClicked: Quickshell.execDetached(["qs", "-n", "-p", barScope.themeSelectorShell]) }
                     }
                     Repeater {
                         model: barScope.quicklinks
@@ -320,9 +325,15 @@ Scope {
                 }
 
                 RowLayout {
+                    id: centerRow
                     anchors.horizontalCenter: parent.horizontalCenter
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: 6
+                    // Never wider than the gap between the side rows, so the
+                    // three sections cannot overlap on narrow screens (the
+                    // overflow is clipped instead).
+                    clip: true
+                    width: Math.max(0, Math.min(implicitWidth, parent.width - leftRow.width - rightRow.width - 12))
 
                     Rectangle {
                         Layout.preferredHeight: 30; radius: barScope.theme.radius; color: barScope.theme.moduleBg
@@ -365,6 +376,7 @@ Scope {
                 }
 
                 RowLayout {
+                    id: rightRow
                     anchors.right: parent.right
                     anchors.rightMargin: 10
                     anchors.verticalCenter: parent.verticalCenter

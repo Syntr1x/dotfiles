@@ -202,14 +202,14 @@ ShellRoot {
                                     Image {
                                         id: wpImg
                                         anchors.fill: parent
-                                        source: "file://" + root.wallpaperDir + "/" + root.wallpapers[index]
+                                        source: "file://" + encodeURI(root.wallpaperDir + "/" + root.wallpapers[index])
                                         fillMode: Image.PreserveAspectCrop
                                         asynchronous: true
                                         cache: true
                                         // wallpaperDir is config-relative; retry once via the XDG fallback.
                                         onStatusChanged: {
                                             if (status !== Image.Error) return
-                                            let fb = "file://" + root.wallpaperFallbackDir + "/" + root.wallpapers[index];
+                                            let fb = "file://" + encodeURI(root.wallpaperFallbackDir + "/" + root.wallpapers[index]);
                                             if (source.toString() !== fb) source = fb;
                                             else console.log("Wallpaper missing: " + root.wallpapers[index] + " tried " + root.wallpaperDir + " and " + root.wallpaperFallbackDir);
                                         }
