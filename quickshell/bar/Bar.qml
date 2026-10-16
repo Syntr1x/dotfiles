@@ -16,7 +16,9 @@ Scope {
 
     // Injected by shell.qml (untyped: directory imports carry no type info).
     property var theme
-    property bool visible: true
+    // Custom name: "visible" would read like the base type's non-existent
+    // property of the same name.
+    property bool barVisible: true
 
     readonly property int barHeight: 38
     readonly property string terminal: "ghostty"
@@ -171,7 +173,8 @@ Scope {
     }
     Process {
         id: volProc
-        command: ["bash", "-c", "wpctl get-volume @DEFAULT_AUDIO_SINK@ 2>/dev/null || pactl get-sink-volume @DEFAULT_SINK@ 2>/dev/null | head -n1"]
+        // pactl get-sink-volume does not report mute; ask for it separately.
+        command: ["bash", "-c", "wpctl get-volume @DEFAULT_AUDIO_SINK@ 2>/dev/null || { pactl get-sink-volume @DEFAULT_SINK@ 2>/dev/null | head -n1; pactl get-sink-mute @DEFAULT_SINK@ 2>/dev/null; }"]
         stdout: StdioCollector { onStreamFinished: barScope._volSample(text.trim()) }
     }
 
@@ -183,12 +186,12 @@ Scope {
     }
     Component.onCompleted: barScope._startPolling()
 
-    Timer { interval: 1000; repeat: true; running: barScope.visible; onTriggered: hyprProc.running = true }
-    Timer { interval: 2000; repeat: true; running: barScope.visible; onTriggered: statProc.running = true }
+    Timer { interval: 1000; repeat: true; running: barScope.barVisible; onTriggered: hyprProc.running = true }
+    Timer { interval: 2000; repeat: true; running: barScope.barVisible; onTriggered: statProc.running = true }
     // nmcli is by far the slowest call; 5s is plenty.
-    Timer { interval: 5000; repeat: true; running: barScope.visible; onTriggered: hwProc.running = true }
+    Timer { interval: 5000; repeat: true; running: barScope.barVisible; onTriggered: hwProc.running = true }
     Timer {
-        interval: 2000; repeat: true; running: barScope.visible
+        interval: 2000; repeat: true; running: barScope.barVisible
         onTriggered: { if (barScope._sinkAudio() === null) volProc.running = true; }
     }
 
@@ -230,7 +233,8 @@ Scope {
         if (state !== "activated") {
             barScope.netTxt = barScope.icoOffline + "  off";
             barScope.netDown = true;
-        } else if (/^wifi/.test(type)) {
+        // nmcli types: "802-11-wireless" (and mesh); "wifi" never appears.
+        } else if (/wireless/.test(type)) {
             barScope.netTxt = barScope.icoWifi + "  " + name.slice(0, 10);
             barScope.netDown = false;
         } else {
@@ -250,7 +254,8 @@ Scope {
         barScope.batState = (p[1] || "").trim();
     }
     function _volSample(line) {
-        const muted = /muted/i.test(line);
+        // "[MUTED]" (wpctl) and "Mute: yes" (pactl) both match.
+        const muted = /mute/i.test(line);
         const m = /(\d+)%/.exec(line) || /Volume:\s*([\d.]+)/.exec(line);
         barScope.volPollMuted = muted;
         if (m === null) {
@@ -275,11 +280,11 @@ Scope {
             id: barPanel
             required property var modelData
             screen: modelData
-            visible: barScope.visible
+            visible: barScope.barVisible
 
             anchors { top: true; left: true; right: true }
             implicitHeight: barScope.barHeight
-            exclusiveZone: barScope.visible ? barScope.barHeight : 0
+            exclusiveZone: barScope.barVisible ? barScope.barHeight : 0
             color: "transparent"
 
             SystemClock { id: clock; precision: SystemClock.Seconds }

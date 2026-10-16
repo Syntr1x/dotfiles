@@ -24,6 +24,6 @@ ShellRoot {
 
     BarModule.Bar {
         theme: theme
-        visible: root.barVisible
+        barVisible: root.barVisible
     }
 }

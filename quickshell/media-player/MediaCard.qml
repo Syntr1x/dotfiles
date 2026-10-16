@@ -75,6 +75,12 @@ Item {
         return m + ":" + (s < 10 ? "0" + s : "" + s);
     }
 
+    // Shared by click and drag so both paths get the same null/clamp guards.
+    function seekTo(ratio) {
+        if (!root.seekable) return;
+        root.player.position = root.length * Math.min(1, Math.max(0, ratio));
+    }
+
     // MprisPlayer.position is pull-based: emitting positionChanged is what
     // makes it re-read the position over D-Bus.
     Timer {
@@ -198,11 +204,17 @@ Item {
                     color: root.accent
                 }
                 MouseArea {
-                    anchors.fill: parent
+                    // Taller than the 5px bar itself, centered on it, so the
+                    // click target is hittable; drag also seeks.
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
+                    height: 18
                     enabled: root.seekable
                     cursorShape: Qt.PointingHandCursor
-                    onClicked: mouse => {
-                        root.player.position = root.length * Math.min(1, Math.max(0, mouse.x / progBg.width));
+                    onClicked: mouse => root.seekTo(mouse.x / progBg.width)
+                    onPositionChanged: mouse => {
+                        if (pressed) root.seekTo(mouse.x / progBg.width);
                     }
                 }
             }

@@ -23,7 +23,7 @@ ShellRoot {
             exclusionMode: ExclusionMode.Ignore
             exclusiveZone: 0
             aboveWindows: true
-            focusable: false
+            focusable: true
             color: "transparent"
             implicitHeight: 130
 
@@ -37,6 +37,13 @@ ShellRoot {
 
             Item {
                 anchors.fill: parent
+                // Window-level Esc: the grab gives this window keyboard focus,
+                // and unhandled keys stop here. Clicks outside the card region
+                // clear HyprlandFocusGrab and quit via onCleared below.
+                focus: true
+                Keys.onPressed: e => {
+                    if (e.key === Qt.Key_Escape) { e.accepted = true; Qt.quit(); }
+                }
                 MediaCard {
                     id: card
                     anchors.top: parent.top

@@ -30,8 +30,9 @@ wp="${wallpapers[$idx]}"
 color="${accent_colors[$idx]}"
 
 # Escape every ERE metacharacter so names and paths round-trip
-# through grep -E and sed -E unharmed.
-sed_escape() { printf '%s' "$1" | sed -e 's#[][\\/.^$+?(){}|*-]#\\&#g'; }
+# through grep -E and sed -E unharmed. "&" is not an ERE metachar,
+# but it must be quoted: sed expands it in the replacement.
+sed_escape() { printf '%s' "$1" | sed -e 's#[][\\/.^$+?(){}|*&-]#\\&#g'; }
 
 # Accent first so the bar follows live even if a later step fails.
 # Write via temp + mv: an in-place truncate would let the bar's FileView

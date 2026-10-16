@@ -24,7 +24,7 @@ ShellRoot {
         return (xdg || (Quickshell.env("HOME") || "") + "/.local/state") + "/quickshell";
     }
     readonly property string historyPath: root.historyDir + "/launcher-history.json"
-    property FileView historyFile: FileView {
+    readonly property FileView historyFile: FileView {
         path: root.historyPath
         watchChanges: false
         blockLoading: true
@@ -87,7 +87,7 @@ ShellRoot {
         }
         try {
             root.historyFile.setText(JSON.stringify(root.history));
-        } catch (err) {}
+        } catch (err) { console.warn("launcher: could not save history:", err); }
     }
 
     function recordLaunch(e) {
@@ -148,7 +148,9 @@ ShellRoot {
             if (ni < 0) return -1;
             ni++;
         }
-        return 1 - name.length * 0.05;
+        // Clamp: without it the 1 - length*0.05 score goes negative for long
+        // names and refilter drops them as non-matches.
+        return Math.max(0.5, 1 - name.length * 0.05);
     }
 
     function refilter() {
