@@ -12,7 +12,7 @@ Uses some files from:
 
 Be aware:
 
-- Most of the .qml is written with the assistance of an LLM (muse 1.3) based on the older version of my dots.
+- Most of the .qml is written with the assistance of an LLM (muse 1.3, GLM.5.3) based on the older version of my dots.
 
 - Tested in a VM, my desktop and laptop, but it might still cause problems.
 
