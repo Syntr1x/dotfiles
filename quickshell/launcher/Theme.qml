@@ -38,5 +38,15 @@ QtObject {
     }
 
     readonly property color textSub: "#a0a0a0"
-    readonly property string fontFam: "Fira Sans Semibold, JetBrainsMono Nerd Font, Font Awesome 6 Free, sans-serif"
+    // Keep in sync with ../Theme.qml (see comment there).
+    function scaleFor(screenName) {
+        const v = parseFloat(Quickshell.env("QUICKSHELL_UI_SCALE") || "");
+        if (!isNaN(v) && v > 0.4 && v < 2.0) return v;
+        if (screenName === "DP-1") return 0.75;
+        return 1.0;
+    }
+    readonly property real uiScale: scaleFor("")
+    function px(v) { return Math.round(v * uiScale); }
+    function pxFor(screenName, v) { return Math.round(v * scaleFor(screenName)); }
+    readonly property string fontFam: "Inter"
 }

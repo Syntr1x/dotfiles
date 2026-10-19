@@ -5,16 +5,18 @@ import Quickshell.Widgets
 
 Item {
     id: root
-    width: 410
-    height: 116
+    property real uiScale: 0.75
+    function px(v) { return Math.round(v * uiScale); }
+    width: px(410)
+    height: px(116)
 
     property string accent: "#fed79d"
     property string accentFg: "#171717"
 
-    readonly property string fontFam: "Fira Sans Semibold, sans-serif"
+    readonly property string fontFam: "Inter"
     // Private-use glyphs (play/pause/skip) always need the Nerd Font.
     // Keep the family in sync with Theme.qml so glyph metrics match the bar.
-    readonly property string iconFam: "JetBrainsMono Nerd Font, Fira Sans Semibold, sans-serif"
+    readonly property string iconFam: "Symbols Nerd Font"
 
     property string manualDbus: ""
 
@@ -100,26 +102,26 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        radius: 14
+        radius: px(14)
         color: Qt.rgba(0.09, 0.09, 0.09, 0.88)
         border.color: root.accent
-        border.width: 2
+        border.width: Math.max(1, px(2))
     }
 
     Rectangle {
         anchors.top: parent.top
         anchors.right: parent.right
-        anchors.topMargin: 6
-        anchors.rightMargin: 6
-        width: 22
-        height: 22
-        radius: 11
+        anchors.topMargin: px(6)
+        anchors.rightMargin: px(6)
+        width: px(22)
+        height: px(22)
+        radius: px(11)
         color: closeArea.containsMouse ? Qt.rgba(224, 108, 117, 0.25) : "transparent"
         Text {
             anchors.centerIn: parent
             text: "\u{2715}"
             font.family: root.fontFam
-            font.pixelSize: 11
+            font.pixelSize: px(11)
             color: closeArea.containsMouse ? "#e06c75" : "#a0a0a0"
         }
         MouseArea {
@@ -133,15 +135,15 @@ Item {
 
     RowLayout {
         anchors.fill: parent
-        anchors.margins: 12
-        anchors.rightMargin: 16
-        spacing: 12
+        anchors.margins: px(12)
+        anchors.rightMargin: px(16)
+        spacing: px(12)
 
         ClippingRectangle {
-            Layout.preferredWidth: 64
-            Layout.preferredHeight: 64
+            Layout.preferredWidth: px(64)
+            Layout.preferredHeight: px(64)
             Layout.alignment: Qt.AlignVCenter
-            radius: 10
+            radius: px(10)
             color: Qt.rgba(1, 1, 1, 0.06)
 
             Image {
@@ -158,7 +160,7 @@ Item {
                 visible: root.artUrl === ""
                 text: "\u{266a}"
                 font.family: root.fontFam
-                font.pixelSize: 26
+                font.pixelSize: px(26)
                 color: root.accent
             }
         }
@@ -166,13 +168,13 @@ Item {
         ColumnLayout {
             Layout.fillWidth: true
             Layout.alignment: Qt.AlignVCenter
-            spacing: 3
+            spacing: px(3)
 
             Text {
                 Layout.fillWidth: true
                 text: root.title
                 font.family: root.fontFam
-                font.pixelSize: 14
+                font.pixelSize: px(14)
                 font.weight: Font.DemiBold
                 color: "#ffffff"
                 elide: Text.ElideRight
@@ -182,7 +184,7 @@ Item {
                 Layout.fillWidth: true
                 text: root.album !== "" ? root.artist + "  \u{2022}  " + root.album : root.artist
                 font.family: root.fontFam
-                font.pixelSize: 12
+                font.pixelSize: px(12)
                 color: "#a0a0a0"
                 elide: Text.ElideRight
                 maximumLineCount: 1
@@ -191,16 +193,16 @@ Item {
             Rectangle {
                 id: progBg
                 Layout.fillWidth: true
-                Layout.preferredHeight: 5
-                Layout.topMargin: 5
-                radius: 3
+                Layout.preferredHeight: px(5)
+                Layout.topMargin: px(5)
+                radius: px(3)
                 color: Qt.rgba(1, 1, 1, 0.12)
                 opacity: root.hasPlayer ? 1 : 0.35
 
                 Rectangle {
                     width: parent.width * root.progress
                     height: parent.height
-                    radius: 3
+                    radius: px(3)
                     color: root.accent
                 }
                 MouseArea {
@@ -209,7 +211,7 @@ Item {
                     anchors.left: parent.left
                     anchors.right: parent.right
                     anchors.verticalCenter: parent.verticalCenter
-                    height: 18
+                    height: px(18)
                     enabled: root.seekable
                     cursorShape: Qt.PointingHandCursor
                     onClicked: mouse => root.seekTo(mouse.x / progBg.width)
@@ -221,21 +223,24 @@ Item {
 
             RowLayout {
                 Layout.fillWidth: true
-                spacing: 6
+                spacing: px(6)
+                // Mono digits for the time readout. Red Hat Mono is verified to
+                // resolve exactly in quickshell 0.3.2 (fontInfo probe 2026-10) —
+                // not an elastic fallback — so keep the exact family name.
                 Text {
                     text: root.fmt(root.position) + " / " + (root.length > 0 ? root.fmt(root.length) : "--:--")
-                    font.family: "JetBrainsMono Nerd Font Mono, " + root.fontFam
-                    font.pixelSize: 10
+                    font.family: "Red Hat Mono"
+                    font.pixelSize: px(10)
                     color: "#a0a0a0"
                 }
                 Item { Layout.fillWidth: true }
                 RowLayout {
                     visible: root.players.length > 1
-                    spacing: 4
+                    spacing: px(4)
                     Text {
                         text: "\u{2039}"
                         font.family: root.fontFam
-                        font.pixelSize: 13
+                        font.pixelSize: px(13)
                         font.bold: true
                         color: prevPlayerArea.containsMouse ? root.accent : "#a0a0a0"
                         MouseArea {
@@ -250,14 +255,14 @@ Item {
                         text: root.playerIndex < 0 ? root.source
                             : root.source + " (" + (root.playerIndex + 1) + "/" + root.players.length + ")"
                         font.family: root.fontFam
-                        font.pixelSize: 10
+                        font.pixelSize: px(10)
                         color: "#a0a0a0"
                         elide: Text.ElideRight
                     }
                     Text {
                         text: "\u{203a}"
                         font.family: root.fontFam
-                        font.pixelSize: 13
+                        font.pixelSize: px(13)
                         font.bold: true
                         color: nextPlayerArea.containsMouse ? root.accent : "#a0a0a0"
                         MouseArea {
@@ -273,7 +278,7 @@ Item {
                     visible: root.players.length <= 1
                     text: root.source
                     font.family: root.fontFam
-                    font.pixelSize: 10
+                    font.pixelSize: px(10)
                     color: "#a0a0a0"
                     elide: Text.ElideRight
                 }
@@ -282,12 +287,12 @@ Item {
 
         RowLayout {
             Layout.alignment: Qt.AlignVCenter
-            spacing: 6
+            spacing: px(6)
 
             Rectangle {
-                Layout.preferredWidth: 34
-                Layout.preferredHeight: 34
-                radius: 17
+                Layout.preferredWidth: px(34)
+                Layout.preferredHeight: px(34)
+                radius: px(17)
                 color: prevArea.containsMouse ? Qt.rgba(1, 1, 1, 0.12) : "transparent"
                 opacity: root.hasPlayer && root.player.canGoPrevious ? 1 : 0.3
                 enabled: root.hasPlayer && root.player.canGoPrevious
@@ -295,7 +300,7 @@ Item {
                     anchors.centerIn: parent
                     text: "\u{f04ae}"
                     font.family: root.iconFam
-                    font.pixelSize: 17
+                    font.pixelSize: px(17)
                     color: "#ffffff"
                 }
                 MouseArea {
@@ -311,9 +316,9 @@ Item {
             }
 
             Rectangle {
-                Layout.preferredWidth: 44
-                Layout.preferredHeight: 44
-                radius: 22
+                Layout.preferredWidth: px(44)
+                Layout.preferredHeight: px(44)
+                radius: px(22)
                 color: playArea.containsMouse ? Qt.lighter(root.accent, 1.18) : root.accent
                 opacity: root.hasPlayer ? 1 : 0.4
                 enabled: root.hasPlayer
@@ -321,7 +326,7 @@ Item {
                     anchors.centerIn: parent
                     text: root.isPlaying ? "\u{f04c}" : "\u{f04b}"
                     font.family: root.iconFam
-                    font.pixelSize: 21
+                    font.pixelSize: px(21)
                     color: root.accentFg
                 }
                 MouseArea {
@@ -340,9 +345,9 @@ Item {
             }
 
             Rectangle {
-                Layout.preferredWidth: 34
-                Layout.preferredHeight: 34
-                radius: 17
+                Layout.preferredWidth: px(34)
+                Layout.preferredHeight: px(34)
+                radius: px(17)
                 color: nextArea.containsMouse ? Qt.rgba(1, 1, 1, 0.12) : "transparent"
                 opacity: root.hasPlayer && root.player.canGoNext ? 1 : 0.3
                 enabled: root.hasPlayer && root.player.canGoNext
@@ -350,7 +355,7 @@ Item {
                     anchors.centerIn: parent
                     text: "\u{f04ad}"
                     font.family: root.iconFam
-                    font.pixelSize: 17
+                    font.pixelSize: px(17)
                     color: "#ffffff"
                 }
                 MouseArea {

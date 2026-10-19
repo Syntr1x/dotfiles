@@ -1,3 +1,4 @@
+//@ pragma UseQApplication
 pragma ComponentBehavior: Bound
 // One-shot app launcher (SUPER+R).
 import Quickshell
@@ -5,10 +6,15 @@ import Quickshell.Io
 import Quickshell.Hyprland
 import QtQuick
 import QtQuick.Layouts
+import QtQuick.Controls
 
 ShellRoot {
     id: root
     readonly property Theme theme: Theme {}
+    // One-shot popup: follow whichever screen the window lands on.
+    readonly property string activeScreenName: (win.screen && win.screen.name) || (Quickshell.screens.length > 0 ? Quickshell.screens[0].name : "")
+    readonly property real activeScale: root.theme.scaleFor(activeScreenName)
+    function apx(v) { return Math.round(v * activeScale); }
 
     property string query: ""
     property int selected: 0
@@ -273,25 +279,25 @@ ShellRoot {
 
         Rectangle {
             id: card
-            width: 620
-            height: Math.min(470, 150 + Math.min(root.filtered.length, 8) * 52)
+            width: root.apx(620)
+            height: root.apx(Math.min(470, 150 + Math.min(root.filtered.length, 8) * 52))
             anchors.centerIn: parent
-            radius: 16
+            radius: root.apx(16)
             color: Qt.rgba(20 / 255, 20 / 255, 22 / 255, 0.96)
             border.color: Qt.alpha(root.theme.accent, 0.6)
             border.width: 1
 
             ColumnLayout {
                 anchors.fill: parent
-                anchors.margins: 14
-                spacing: 10
+                anchors.margins: root.apx(14)
+                spacing: root.apx(10)
 
                 Rectangle {
-                    Layout.fillWidth: true; Layout.preferredHeight: 50; radius: 10
+                    Layout.fillWidth: true; Layout.preferredHeight: root.apx(50); radius: root.apx(10)
                     color: Qt.rgba(255, 255, 255, 0.06)
                     RowLayout {
-                        anchors.fill: parent; anchors.leftMargin: 14; anchors.rightMargin: 14; spacing: 10
-                        Text { text: "\u{f002}"; color: root.theme.textSub; font.family: root.theme.fontFam; font.pixelSize: 15 }
+                        anchors.fill: parent; anchors.leftMargin: root.apx(14); anchors.rightMargin: root.apx(14); spacing: root.apx(10)
+                        Text { text: "\u{f002}"; color: root.theme.textSub; font.family: root.theme.fontFam; font.pixelSize: root.apx(15) }
                         TextInput {
                             id: entry
                             Layout.fillWidth: true
@@ -299,7 +305,7 @@ ShellRoot {
                             color: "white"
                             selectionColor: root.theme.accent
                             selectedTextColor: root.theme.accentFg
-                            font.family: root.theme.fontFam; font.pixelSize: 14
+                            font.family: root.theme.fontFam; font.pixelSize: root.apx(14)
                             focus: true
                             onTextEdited: { root.query = text; root.refilter(); }
                             onActiveFocusChanged: { if (!activeFocus) focusTimer.running = true; }
@@ -313,7 +319,7 @@ ShellRoot {
                     Layout.fillWidth: true; Layout.fillHeight: true
                     model: root.filtered
                     clip: true
-                    spacing: 6
+                    spacing: root.apx(6)
                     currentIndex: root.selected
                     boundsBehavior: Flickable.StopAtBounds
                     // Keep the keyboard selection in view.
@@ -325,18 +331,18 @@ ShellRoot {
                         required property int index
                         readonly property bool isSelected: resultRow.index === root.selected
                         width: ListView.view.width
-                        height: 46
-                        radius: 10
+                        height: root.apx(46)
+                        radius: root.apx(10)
                         color: resultRow.isSelected ? root.theme.accent
                             : (rowHover.containsMouse ? Qt.rgba(255, 255, 255, 0.06) : Qt.rgba(255, 255, 255, 0.03))
                         ColumnLayout {
-                            anchors.fill: parent; anchors.leftMargin: 14; anchors.rightMargin: 14
-                            anchors.topMargin: 5; anchors.bottomMargin: 5; spacing: 0
+                            anchors.fill: parent; anchors.leftMargin: root.apx(14); anchors.rightMargin: root.apx(14)
+                            anchors.topMargin: root.apx(5); anchors.bottomMargin: root.apx(5); spacing: 0
                             Text {
                                 Layout.fillWidth: true
                                 text: resultRow.modelData.name || resultRow.modelData.id
                                 color: resultRow.isSelected ? root.theme.accentFg : "white"
-                                font.family: root.theme.fontFam; font.pixelSize: 13; font.bold: resultRow.isSelected
+                                font.family: root.theme.fontFam; font.pixelSize: root.apx(13); font.bold: resultRow.isSelected
                                 elide: Text.ElideRight
                             }
                             Text {
@@ -345,7 +351,7 @@ ShellRoot {
                                 visible: subtitle !== ""
                                 text: subtitle
                                 color: resultRow.isSelected ? root.theme.accentFg : root.theme.textSub
-                                font.family: root.theme.fontFam; font.pixelSize: 10
+                                font.family: root.theme.fontFam; font.pixelSize: root.apx(10)
                                 elide: Text.ElideRight
                             }
                         }
@@ -361,7 +367,7 @@ ShellRoot {
                 Text {
                     Layout.fillWidth: true
                     text: root.filtered.length + " apps  \u{2022}  Enter launch  \u{2022}  Esc close"
-                    color: root.theme.textSub; font.family: root.theme.fontFam; font.pixelSize: 10
+                    color: root.theme.textSub; font.family: root.theme.fontFam; font.pixelSize: root.apx(10)
                     horizontalAlignment: Text.AlignHCenter
                 }
             }

@@ -20,7 +20,20 @@ Scope {
     // property of the same name.
     property bool barVisible: true
 
-    readonly property int barHeight: 38
+    // Per-output scale: DP-1 (32" 1080p ~70 DPI) -> 0.75, eDP-1 laptop -> 1.0.
+    // Env QUICKSHELL_UI_SCALE forces a global value. Variants rebuild on
+    // plug/unplug so each PanelWindow picks up its own screen automatically.
+    function scaleFor(screenName) {
+        const v = parseFloat(Quickshell.env("QUICKSHELL_UI_SCALE") || "");
+        if (!isNaN(v) && v > 0.4 && v < 2.0) return v;
+        if (barScope.theme && barScope.theme.scaleFor !== undefined) return barScope.theme.scaleFor(screenName);
+        if (screenName === "DP-1") return 0.75;
+        return 1.0;
+    }
+    function pxFor(screenName, v) { return Math.round(v * barScope.scaleFor(screenName)); }
+    readonly property real uiScale: barScope.scaleFor("")
+    function px(v) { return Math.round(v * barScope.uiScale); }
+    readonly property int barHeight: barScope.px(38)
     readonly property string terminal: "ghostty"
 
     readonly property string configDir: {
@@ -173,7 +186,6 @@ Scope {
     }
     Process {
         id: volProc
-        // pactl get-sink-volume does not report mute; ask for it separately.
         command: ["bash", "-c", "wpctl get-volume @DEFAULT_AUDIO_SINK@ 2>/dev/null || { pactl get-sink-volume @DEFAULT_SINK@ 2>/dev/null | head -n1; pactl get-sink-mute @DEFAULT_SINK@ 2>/dev/null; }"]
         stdout: StdioCollector { onStreamFinished: barScope._volSample(text.trim()) }
     }
@@ -281,10 +293,13 @@ Scope {
             required property var modelData
             screen: modelData
             visible: barScope.barVisible
+            // Per-screen scale: follows whichever output this bar instance is on.
+            readonly property real uiScale: barScope.scaleFor(modelData ? modelData.name : "")
+            function px(v) { return Math.round(v * uiScale); }
 
             anchors { top: true; left: true; right: true }
-            implicitHeight: barScope.barHeight
-            exclusiveZone: barScope.barVisible ? barScope.barHeight : 0
+            implicitHeight: px(38)
+            exclusiveZone: barScope.barVisible ? px(38) : 0
             color: "transparent"
 
             SystemClock { id: clock; precision: SystemClock.Seconds }
@@ -296,14 +311,14 @@ Scope {
                 RowLayout {
                     id: leftRow
                     anchors.left: parent.left
-                    anchors.leftMargin: 10
+                    anchors.leftMargin: px(10)
                     anchors.verticalCenter: parent.verticalCenter
-                    spacing: 6
+                    spacing: px(6)
 
                     Rectangle {
-                        Layout.preferredHeight: 30; Layout.preferredWidth: 96; radius: barScope.theme.radius
+                        Layout.preferredHeight: px(30); Layout.preferredWidth: px(96); radius: px(barScope.theme.radius)
                         color: themeHover.containsMouse ? barScope.theme.moduleBgHover : barScope.theme.moduleBg
-                        Text { anchors.centerIn: parent; text: barScope.icoTheme + "  Theme"; color: barScope.theme.textCol; font.family: barScope.theme.fontFam; font.pixelSize: 13; font.bold: true }
+                        Text { anchors.centerIn: parent; text: barScope.icoTheme + "  Theme"; color: barScope.theme.textCol; font.family: barScope.theme.fontFam; font.pixelSize: px(13); font.bold: true }
                         MouseArea { id: themeHover; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
                             // -n: a second click must not stack another theme selector window.
                             onClicked: Quickshell.execDetached(["qs", "-n", "-p", barScope.themeSelectorShell]) }
@@ -313,19 +328,19 @@ Scope {
                         delegate: Rectangle {
                             id: quicklink
                             required property var modelData
-                            Layout.preferredHeight: 30; Layout.preferredWidth: 42; radius: barScope.theme.radius
+                            Layout.preferredHeight: px(30); Layout.preferredWidth: px(42); radius: px(barScope.theme.radius)
                             color: quicklinkHover.containsMouse ? barScope.theme.moduleBgHover : barScope.theme.moduleBg
-                            Text { anchors.centerIn: parent; text: quicklink.modelData.icon; color: barScope.theme.textCol; font.family: barScope.theme.fontFam; font.pixelSize: 15 }
+                            Text { anchors.centerIn: parent; text: quicklink.modelData.icon; color: barScope.theme.textCol; font.family: barScope.theme.fontFam; font.pixelSize: px(15) }
                             MouseArea { id: quicklinkHover; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
                                 onClicked: Quickshell.execDetached(quicklink.modelData.cmd) }
                         }
                     }
                     Rectangle {
                         visible: barScope.winTitle !== ""
-                        Layout.preferredHeight: 30; Layout.maximumWidth: 360; Layout.preferredWidth: titleTxt.implicitWidth + 28; radius: barScope.theme.radius
+                        Layout.preferredHeight: px(30); Layout.maximumWidth: px(360); Layout.preferredWidth: titleTxt.implicitWidth + px(28); radius: px(barScope.theme.radius)
                         color: barScope.theme.moduleBg
-                        Text { id: titleTxt; anchors.fill: parent; anchors.leftMargin: 14; anchors.rightMargin: 14; verticalAlignment: Text.AlignVCenter
-                            text: barScope.winTitle; color: barScope.theme.textCol; font.family: barScope.theme.fontFam; font.pixelSize: 12; elide: Text.ElideRight }
+                        Text { id: titleTxt; anchors.fill: parent; anchors.leftMargin: px(14); anchors.rightMargin: px(14); verticalAlignment: Text.AlignVCenter
+                            text: barScope.winTitle; color: barScope.theme.textCol; font.family: barScope.theme.fontFam; font.pixelSize: px(12); elide: Text.ElideRight }
                     }
                 }
 
@@ -333,26 +348,26 @@ Scope {
                     id: centerRow
                     anchors.horizontalCenter: parent.horizontalCenter
                     anchors.verticalCenter: parent.verticalCenter
-                    spacing: 6
+                    spacing: px(6)
                     // Never wider than the gap between the side rows, so the
                     // three sections cannot overlap on narrow screens (the
                     // overflow is clipped instead).
                     clip: true
-                    width: Math.max(0, Math.min(implicitWidth, parent.width - leftRow.width - rightRow.width - 12))
+                    width: Math.max(0, Math.min(implicitWidth, parent.width - leftRow.width - rightRow.width - px(12)))
 
                     Rectangle {
-                        Layout.preferredHeight: 30; radius: barScope.theme.radius; color: barScope.theme.moduleBg
-                        Layout.preferredWidth: wsRow.implicitWidth + 8
-                        RowLayout { id: wsRow; anchors.centerIn: parent; spacing: 4
+                        Layout.preferredHeight: px(30); radius: px(barScope.theme.radius); color: barScope.theme.moduleBg
+                        Layout.preferredWidth: wsRow.implicitWidth + px(8)
+                        RowLayout { id: wsRow; anchors.centerIn: parent; spacing: px(4)
                             Repeater {
                                 model: barScope.workspaceIds(barScope.pollWsIds)
                                 delegate: Rectangle {
                                     required property var modelData
                                     property int wsId: modelData
                                     property bool isActive: barScope.isFocusedWs(wsId, barScope.pollActiveWs)
-                                    Layout.preferredHeight: 26; Layout.preferredWidth: isActive ? 34 : 28; radius: 9
+                                    Layout.preferredHeight: px(26); Layout.preferredWidth: isActive ? px(34) : px(28); radius: px(9)
                                     color: isActive ? barScope.theme.accent : "transparent"
-                                    Text { anchors.centerIn: parent; text: wsId; color: isActive ? barScope.theme.accentFg : barScope.theme.textCol; font.family: barScope.theme.fontFam; font.pixelSize: 13; font.bold: isActive }
+                                    Text { anchors.centerIn: parent; text: wsId; color: isActive ? barScope.theme.accentFg : barScope.theme.textCol; font.family: barScope.theme.fontFam; font.pixelSize: px(13); font.bold: isActive }
                                     MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor
                                         onClicked: barScope.dispatchWorkspace(wsId) }
                                 }
@@ -360,10 +375,10 @@ Scope {
                         }
                     }
                     Rectangle {
-                        Layout.preferredHeight: 30; Layout.preferredWidth: 42; radius: barScope.theme.radius
+                        Layout.preferredHeight: px(30); Layout.preferredWidth: px(42); radius: px(barScope.theme.radius)
                         color: mediaHover.containsMouse ? barScope.theme.moduleBgHover : barScope.theme.moduleBg
                         // left click: popup, right click: play/pause
-                        Text { anchors.centerIn: parent; text: (barScope.mediaPlayer && barScope.mediaPlayer.isPlaying) ? barScope.icoPause : barScope.icoPlay; color: barScope.theme.textCol; font.family: barScope.theme.fontFam; font.pixelSize: 13 }
+                        Text { anchors.centerIn: parent; text: (barScope.mediaPlayer && barScope.mediaPlayer.isPlaying) ? barScope.icoPause : barScope.icoPlay; color: barScope.theme.textCol; font.family: barScope.theme.fontFam; font.pixelSize: px(13) }
                         MouseArea { id: mediaHover; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
                             acceptedButtons: Qt.LeftButton | Qt.RightButton
                             onClicked: mouse => {
@@ -383,15 +398,15 @@ Scope {
                 RowLayout {
                     id: rightRow
                     anchors.right: parent.right
-                    anchors.rightMargin: 10
+                    anchors.rightMargin: px(10)
                     anchors.verticalCenter: parent.verticalCenter
-                    spacing: 6
+                    spacing: px(6)
 
                     // volume: left = mute toggle, right = mixer, wheel = level
                     Rectangle {
-                        Layout.preferredHeight: 30; Layout.preferredWidth: 78; radius: barScope.theme.radius
+                        Layout.preferredHeight: px(30); Layout.preferredWidth: px(78); radius: px(barScope.theme.radius)
                         color: volHover.containsMouse ? barScope.theme.moduleBgHover : barScope.theme.moduleBg
-                        Text { anchors.centerIn: parent; text: (barScope.volMuted ? barScope.icoMute : barScope.icoVol) + " " + barScope.volTxt; color: barScope.volMuted ? barScope.theme.textSub : barScope.theme.textCol; font.family: barScope.theme.fontFam; font.pixelSize: 12 }
+                        Text { anchors.centerIn: parent; text: (barScope.volMuted ? barScope.icoMute : barScope.icoVol) + " " + barScope.volTxt; color: barScope.volMuted ? barScope.theme.textSub : barScope.theme.textCol; font.family: barScope.theme.fontFam; font.pixelSize: px(12) }
                         MouseArea { id: volHover; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
                             acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
                             onClicked: mouse => {
@@ -406,52 +421,52 @@ Scope {
                             } }
                     }
                     Rectangle {
-                        Layout.preferredHeight: 30; Layout.maximumWidth: 150; Layout.preferredWidth: netTxt.implicitWidth + 28; radius: barScope.theme.radius
+                        Layout.preferredHeight: px(30); Layout.maximumWidth: px(150); Layout.preferredWidth: netTxt.implicitWidth + px(28); radius: px(barScope.theme.radius)
                         color: netHover.containsMouse ? barScope.theme.moduleBgHover : barScope.theme.moduleBg
-                        Text { id: netTxt; anchors.fill: parent; anchors.leftMargin: 14; anchors.rightMargin: 14; verticalAlignment: Text.AlignVCenter
-                            text: barScope.netTxt; color: barScope.netDown ? barScope.theme.red : barScope.theme.textCol; font.family: barScope.theme.fontFam; font.pixelSize: 12; elide: Text.ElideRight }
+                        Text { id: netTxt; anchors.fill: parent; anchors.leftMargin: px(14); anchors.rightMargin: px(14); verticalAlignment: Text.AlignVCenter
+                            text: barScope.netTxt; color: barScope.netDown ? barScope.theme.red : barScope.theme.textCol; font.family: barScope.theme.fontFam; font.pixelSize: px(12); elide: Text.ElideRight }
                         MouseArea { id: netHover; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
                             onClicked: Quickshell.execDetached([barScope.terminal, "-e", "nmtui"]) }
                     }
                     Rectangle {
-                        Layout.preferredHeight: 30; Layout.preferredWidth: 78; radius: barScope.theme.radius
+                        Layout.preferredHeight: px(30); Layout.preferredWidth: px(78); radius: px(barScope.theme.radius)
                         color: cpuHover.containsMouse ? barScope.theme.moduleBgHover : barScope.theme.moduleBg
-                        Text { anchors.centerIn: parent; text: barScope.icoCpu + "  " + (barScope.cpuPct < 0 ? "--%" : barScope.cpuPct + "%"); color: barScope.theme.textCol; font.family: barScope.theme.fontFam; font.pixelSize: 12 }
+                        Text { anchors.centerIn: parent; text: barScope.icoCpu + "  " + (barScope.cpuPct < 0 ? "--%" : barScope.cpuPct + "%"); color: barScope.theme.textCol; font.family: barScope.theme.fontFam; font.pixelSize: px(12) }
                         MouseArea { id: cpuHover; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
                             onClicked: Quickshell.execDetached([barScope.terminal, "-e", "btop"]) }
                     }
                     Rectangle {
-                        Layout.preferredHeight: 30; Layout.preferredWidth: 68; radius: barScope.theme.radius
+                        Layout.preferredHeight: px(30); Layout.preferredWidth: px(68); radius: px(barScope.theme.radius)
                         color: memHover.containsMouse ? barScope.theme.moduleBgHover : barScope.theme.moduleBg
-                        Text { anchors.centerIn: parent; text: barScope.icoMem + "  " + (barScope.memPct < 0 ? "--%" : barScope.memPct + "%"); color: barScope.theme.textCol; font.family: barScope.theme.fontFam; font.pixelSize: 12 }
+                        Text { anchors.centerIn: parent; text: barScope.icoMem + "  " + (barScope.memPct < 0 ? "--%" : barScope.memPct + "%"); color: barScope.theme.textCol; font.family: barScope.theme.fontFam; font.pixelSize: px(12) }
                         MouseArea { id: memHover; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
                             onClicked: Quickshell.execDetached([barScope.terminal, "-e", "btop"]) }
                     }
                     Rectangle {
                         visible: barScope.batPct >= 0
-                        Layout.preferredHeight: 30; Layout.preferredWidth: 72; radius: barScope.theme.radius; color: barScope.theme.moduleBg
-                        Text { anchors.centerIn: parent; text: barScope.batIcon + " " + barScope.batPct + "%"; color: barScope.batLow ? barScope.theme.red : barScope.theme.textCol; font.family: barScope.theme.fontFam; font.pixelSize: 12 }
+                        Layout.preferredHeight: px(30); Layout.preferredWidth: px(72); radius: px(barScope.theme.radius); color: barScope.theme.moduleBg
+                        Text { anchors.centerIn: parent; text: barScope.batIcon + " " + barScope.batPct + "%"; color: barScope.batLow ? barScope.theme.red : barScope.theme.textCol; font.family: barScope.theme.fontFam; font.pixelSize: px(12) }
                     }
                     Rectangle {
-                        Layout.preferredHeight: 30; Layout.preferredWidth: 214; radius: barScope.theme.radius; color: barScope.theme.moduleBg
-                        Text { anchors.centerIn: parent; text: barScope.icoDate + "  " + Qt.formatDateTime(clock.date, "ddd MMM dd") + "    " + barScope.icoClock + "  " + Qt.formatDateTime(clock.date, "hh:mm"); color: barScope.theme.textCol; font.family: barScope.theme.fontFam; font.pixelSize: 12; font.bold: true }
+                        Layout.preferredHeight: px(30); Layout.preferredWidth: px(214); radius: px(barScope.theme.radius); color: barScope.theme.moduleBg
+                        Text { anchors.centerIn: parent; text: barScope.icoDate + "  " + Qt.formatDateTime(clock.date, "ddd MMM dd") + "    " + barScope.icoClock + "  " + Qt.formatDateTime(clock.date, "hh:mm"); color: barScope.theme.textCol; font.family: barScope.theme.fontFam; font.pixelSize: px(12); font.bold: true }
                     }
                     Rectangle {
                         visible: trayRow.count > 0
-                        Layout.preferredHeight: 30; Layout.preferredWidth: trayRow.implicitWidth + 16; radius: barScope.theme.radius; color: barScope.theme.moduleBg
-                        RowLayout { id: trayRow; anchors.centerIn: parent; spacing: 4
+                        Layout.preferredHeight: px(30); Layout.preferredWidth: trayRow.implicitWidth + px(16); radius: px(barScope.theme.radius); color: barScope.theme.moduleBg
+                        RowLayout { id: trayRow; anchors.centerIn: parent; spacing: px(4)
                             readonly property int count: SystemTray.items.values.length
                             Repeater {
                                 model: SystemTray.items.values
                                 delegate: Rectangle {
                                     id: trayItem
                                     required property var modelData
-                                    Layout.preferredWidth: 24; Layout.preferredHeight: 24; radius: 7
+                                    Layout.preferredWidth: px(24); Layout.preferredHeight: px(24); radius: px(7)
                                     color: trayMouse.containsMouse ? barScope.theme.moduleBgHover : "transparent"
                                     IconImage {
                                         id: trayIcon
                                         anchors.centerIn: parent
-                                        width: 16; height: 16
+                                        width: px(16); height: px(16)
                                         source: trayItem.modelData.icon
                                         smooth: true
                                     }
@@ -460,7 +475,7 @@ Scope {
                                         anchors.centerIn: parent
                                         visible: trayIcon.status !== Image.Ready && trayIcon.status !== Image.Loading
                                         text: (trayItem.modelData.title || trayItem.modelData.id || "?").charAt(0).toUpperCase()
-                                        color: barScope.theme.textSub; font.family: barScope.theme.fontFam; font.pixelSize: 11; font.bold: true
+                                        color: barScope.theme.textSub; font.family: barScope.theme.fontFam; font.pixelSize: px(11); font.bold: true
                                     }
                                     MouseArea {
                                         id: trayMouse
@@ -483,9 +498,9 @@ Scope {
                         }
                     }
                     Rectangle {
-                        Layout.preferredHeight: 30; Layout.preferredWidth: 42; radius: barScope.theme.radius
+                        Layout.preferredHeight: px(30); Layout.preferredWidth: px(42); radius: px(barScope.theme.radius)
                         color: exitHover.containsMouse ? Qt.alpha(barScope.theme.red, 0.15) : barScope.theme.moduleBg
-                        Text { anchors.centerIn: parent; text: barScope.icoPower; color: exitHover.containsMouse ? barScope.theme.red : barScope.theme.textSub; font.family: barScope.theme.fontFam; font.pixelSize: 14 }
+                        Text { anchors.centerIn: parent; text: barScope.icoPower; color: exitHover.containsMouse ? barScope.theme.red : barScope.theme.textSub; font.family: barScope.theme.fontFam; font.pixelSize: px(14) }
                         MouseArea { id: exitHover; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
                             onClicked: Quickshell.execDetached(["wlogout", "-b", "3"]) }
                     }
