@@ -14,13 +14,37 @@ Item {
     property string accentFg: "#171717"
 
     readonly property string fontFam: "Inter"
-    // Private-use glyphs (play/pause/skip) always need the Nerd Font.
-    // Keep the family in sync with Theme.qml so glyph metrics match the bar.
     readonly property string iconFam: "Symbols Nerd Font"
 
     property string manualDbus: ""
 
-    readonly property var players: Mpris.players.values
+    // Collapse players that expose the same app under multiple names.
+    readonly property var players: {
+        const all = Mpris.players.values;
+        if (!all) return [];
+        const norm = s => String(s || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+        const seen = {};
+        const out = [];
+        for (let i = 0; i < all.length; ++i) {
+            const p = all[i];
+            const keys = [norm(p.identity)];
+            const dbn = String(p.dbusName || "");
+            keys.push(norm(dbn.indexOf(".") >= 0 ? dbn.slice(dbn.lastIndexOf(".") + 1) : dbn));
+            const good = keys.filter(k => k !== "" && k !== "mediaplayer2" && k !== "mpris");
+            let at = -1;
+            for (let k = 0; k < good.length && at < 0; ++k) {
+                if (seen[good[k]] !== undefined) at = seen[good[k]];
+            }
+            if (at < 0) {
+                out.push(p);
+                for (let k = 0; k < good.length; ++k)
+                    if (seen[good[k]] === undefined) seen[good[k]] = out.length - 1;
+            } else if ((p.isPlaying ? 1 : 0) > (out[at].isPlaying ? 1 : 0)) {
+                out[at] = p;
+            }
+        }
+        return out;
+    }
 
     function pickAuto() {
         const all = root.players;
@@ -44,9 +68,9 @@ Item {
         return root.autoPlayer;
     }
 
-    // MprisPlayer is a QObject: a destroyed player becomes a null JS value.
     readonly property bool hasPlayer: root.player !== null && root.player !== undefined
     readonly property bool isPlaying: root.hasPlayer && root.player.isPlaying
+    readonly property bool positionSupported: root.hasPlayer && root.player.positionSupported
 
     readonly property string title: !root.hasPlayer ? "Nothing playing"
         : (root.player.trackTitle !== "" ? root.player.trackTitle : "Unknown Title")
@@ -77,28 +101,27 @@ Item {
         return m + ":" + (s < 10 ? "0" + s : "" + s);
     }
 
-    // Shared by click and drag so both paths get the same null/clamp guards.
     function seekTo(ratio) {
         if (!root.seekable) return;
         root.player.position = root.length * Math.min(1, Math.max(0, ratio));
     }
 
-    // MprisPlayer.position is pull-based: emitting positionChanged is what
-    // makes it re-read the position over D-Bus.
+    // position is pull-based; emit positionChanged to refresh it.
     Timer {
         interval: 800
         running: root.isPlaying
         repeat: true
         onTriggered: {
-            if (root.player !== null && root.player !== undefined) root.player.positionChanged();
+            if (root.hasPlayer) root.player.positionChanged();
         }
     }
 
-    readonly property real position: root.hasPlayer ? root.player.position : 0
+    readonly property real position: root.positionSupported ? root.player.position : 0
     readonly property real length: root.hasPlayer && root.player.lengthSupported ? root.player.length : 0
     readonly property real progress: root.length > 0
         ? Math.min(1, Math.max(0, root.position / root.length)) : 0
-    readonly property bool seekable: root.hasPlayer && root.player.canSeek && root.length > 0
+    readonly property bool seekable: root.hasPlayer && root.player.canSeek
+        && root.positionSupported && root.length > 0
 
     Rectangle {
         anchors.fill: parent
@@ -133,241 +156,239 @@ Item {
         }
     }
 
-    RowLayout {
-        anchors.fill: parent
-        anchors.margins: px(12)
-        anchors.rightMargin: px(16)
-        spacing: px(12)
+    ClippingRectangle {
+        id: artBlock
+        anchors.left: parent.left
+        anchors.leftMargin: px(12)
+        anchors.verticalCenter: parent.verticalCenter
+        width: px(64)
+        height: px(64)
+        radius: px(10)
+        color: Qt.rgba(1, 1, 1, 0.06)
 
-        ClippingRectangle {
-            Layout.preferredWidth: px(64)
-            Layout.preferredHeight: px(64)
-            Layout.alignment: Qt.AlignVCenter
-            radius: px(10)
-            color: Qt.rgba(1, 1, 1, 0.06)
+        Image {
+            id: art
+            anchors.fill: parent
+            source: root.artUrl
+            visible: root.artUrl !== "" && art.status !== Image.Error
+            fillMode: Image.PreserveAspectCrop
+            asynchronous: true
+            cache: true
+            smooth: true
+        }
+        Text {
+            anchors.centerIn: parent
+            visible: !art.visible
+            text: "\u{266a}"
+            font.family: root.fontFam
+            font.pixelSize: px(26)
+            color: root.accent
+        }
+    }
 
-            Image {
-                anchors.fill: parent
-                source: root.artUrl
-                visible: root.artUrl !== ""
-                fillMode: Image.PreserveAspectCrop
-                asynchronous: true
-                cache: true
-                smooth: true
-            }
-            Text {
-                anchors.centerIn: parent
-                visible: root.artUrl === ""
-                text: "\u{266a}"
-                font.family: root.fontFam
-                font.pixelSize: px(26)
-                color: root.accent
-            }
+    ColumnLayout {
+        id: midColumn
+        anchors.left: artBlock.right
+        anchors.leftMargin: px(12)
+        anchors.right: controlsRow.left
+        anchors.rightMargin: px(18)
+        anchors.verticalCenter: parent.verticalCenter
+        spacing: px(3)
+
+        Text {
+            Layout.fillWidth: true
+            text: root.title
+            font.family: root.fontFam
+            font.pixelSize: px(14)
+            font.weight: Font.DemiBold
+            color: "#ffffff"
+            elide: Text.ElideRight
+            maximumLineCount: 1
+        }
+        Text {
+            Layout.fillWidth: true
+            text: root.album !== "" ? root.artist + "  \u{2022}  " + root.album : root.artist
+            font.family: root.fontFam
+            font.pixelSize: px(12)
+            color: "#a0a0a0"
+            elide: Text.ElideRight
+            maximumLineCount: 1
         }
 
-        ColumnLayout {
+        Rectangle {
+            id: progBg
             Layout.fillWidth: true
-            Layout.alignment: Qt.AlignVCenter
-            spacing: px(3)
-
-            Text {
-                Layout.fillWidth: true
-                text: root.title
-                font.family: root.fontFam
-                font.pixelSize: px(14)
-                font.weight: Font.DemiBold
-                color: "#ffffff"
-                elide: Text.ElideRight
-                maximumLineCount: 1
-            }
-            Text {
-                Layout.fillWidth: true
-                text: root.album !== "" ? root.artist + "  \u{2022}  " + root.album : root.artist
-                font.family: root.fontFam
-                font.pixelSize: px(12)
-                color: "#a0a0a0"
-                elide: Text.ElideRight
-                maximumLineCount: 1
-            }
+            Layout.preferredHeight: px(5)
+            Layout.topMargin: px(5)
+            radius: px(3)
+            color: Qt.rgba(1, 1, 1, 0.12)
+            opacity: root.hasPlayer ? 1 : 0.35
 
             Rectangle {
-                id: progBg
-                Layout.fillWidth: true
-                Layout.preferredHeight: px(5)
-                Layout.topMargin: px(5)
+                width: parent.width * root.progress
+                height: parent.height
                 radius: px(3)
-                color: Qt.rgba(1, 1, 1, 0.12)
-                opacity: root.hasPlayer ? 1 : 0.35
-
-                Rectangle {
-                    width: parent.width * root.progress
-                    height: parent.height
-                    radius: px(3)
-                    color: root.accent
-                }
-                MouseArea {
-                    // Taller than the 5px bar itself, centered on it, so the
-                    // click target is hittable; drag also seeks.
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-                    anchors.verticalCenter: parent.verticalCenter
-                    height: px(18)
-                    enabled: root.seekable
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: mouse => root.seekTo(mouse.x / progBg.width)
-                    onPositionChanged: mouse => {
-                        if (pressed) root.seekTo(mouse.x / progBg.width);
-                    }
-                }
+                color: root.accent
             }
-
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: px(6)
-                // Mono digits for the time readout. Red Hat Mono is verified to
-                // resolve exactly in quickshell 0.3.2 (fontInfo probe 2026-10) —
-                // not an elastic fallback — so keep the exact family name.
-                Text {
-                    text: root.fmt(root.position) + " / " + (root.length > 0 ? root.fmt(root.length) : "--:--")
-                    font.family: "Red Hat Mono"
-                    font.pixelSize: px(10)
-                    color: "#a0a0a0"
-                }
-                Item { Layout.fillWidth: true }
-                RowLayout {
-                    visible: root.players.length > 1
-                    spacing: px(4)
-                    Text {
-                        text: "\u{2039}"
-                        font.family: root.fontFam
-                        font.pixelSize: px(13)
-                        font.bold: true
-                        color: prevPlayerArea.containsMouse ? root.accent : "#a0a0a0"
-                        MouseArea {
-                            id: prevPlayerArea
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: root.cyclePlayer(-1)
-                        }
-                    }
-                    Text {
-                        text: root.playerIndex < 0 ? root.source
-                            : root.source + " (" + (root.playerIndex + 1) + "/" + root.players.length + ")"
-                        font.family: root.fontFam
-                        font.pixelSize: px(10)
-                        color: "#a0a0a0"
-                        elide: Text.ElideRight
-                    }
-                    Text {
-                        text: "\u{203a}"
-                        font.family: root.fontFam
-                        font.pixelSize: px(13)
-                        font.bold: true
-                        color: nextPlayerArea.containsMouse ? root.accent : "#a0a0a0"
-                        MouseArea {
-                            id: nextPlayerArea
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: root.cyclePlayer(1)
-                        }
-                    }
-                }
-                Text {
-                    visible: root.players.length <= 1
-                    text: root.source
-                    font.family: root.fontFam
-                    font.pixelSize: px(10)
-                    color: "#a0a0a0"
-                    elide: Text.ElideRight
+            MouseArea {
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                height: px(12)
+                enabled: root.seekable
+                cursorShape: Qt.PointingHandCursor
+                onClicked: mouse => root.seekTo(mouse.x / progBg.width)
+                onPositionChanged: mouse => {
+                    if (pressed) root.seekTo(mouse.x / progBg.width);
                 }
             }
         }
 
         RowLayout {
-            Layout.alignment: Qt.AlignVCenter
+            Layout.fillWidth: true
             spacing: px(6)
 
-            Rectangle {
-                Layout.preferredWidth: px(34)
-                Layout.preferredHeight: px(34)
-                radius: px(17)
-                color: prevArea.containsMouse ? Qt.rgba(1, 1, 1, 0.12) : "transparent"
-                opacity: root.hasPlayer && root.player.canGoPrevious ? 1 : 0.3
-                enabled: root.hasPlayer && root.player.canGoPrevious
-                Text {
-                    anchors.centerIn: parent
-                    text: "\u{f04ae}"
-                    font.family: root.iconFam
-                    font.pixelSize: px(17)
-                    color: "#ffffff"
-                }
-                MouseArea {
-                    id: prevArea
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    // Rectangle.enabled does not propagate to MouseArea:
-                    // repeat it here so clicks cannot hit a null player.
-                    enabled: root.hasPlayer && root.player.canGoPrevious
-                    onClicked: root.player.previous()
-                }
+            Text {
+                text: (root.hasPlayer && !root.positionSupported ? "--:--" : root.fmt(root.position))
+                    + " / " + (root.length > 0 ? root.fmt(root.length) : "--:--")
+                font.family: "Red Hat Mono"
+                font.pixelSize: px(10)
+                color: "#a0a0a0"
             }
-
-            Rectangle {
-                Layout.preferredWidth: px(44)
-                Layout.preferredHeight: px(44)
-                radius: px(22)
-                color: playArea.containsMouse ? Qt.lighter(root.accent, 1.18) : root.accent
-                opacity: root.hasPlayer ? 1 : 0.4
-                enabled: root.hasPlayer
+            RowLayout {
+                Layout.fillWidth: true
+                visible: root.players.length > 1
+                spacing: px(4)
                 Text {
-                    anchors.centerIn: parent
-                    text: root.isPlaying ? "\u{f04c}" : "\u{f04b}"
-                    font.family: root.iconFam
-                    font.pixelSize: px(21)
-                    color: root.accentFg
+                    text: "\u{2039}"
+                    font.family: root.fontFam
+                    font.pixelSize: px(13)
+                    font.bold: true
+                    color: prevPlayerArea.containsMouse ? root.accent : "#a0a0a0"
+                    MouseArea {
+                        id: prevPlayerArea
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: root.cyclePlayer(-1)
+                    }
                 }
-                MouseArea {
-                    id: playArea
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    // Rectangle.enabled does not propagate to MouseArea.
-                    enabled: root.hasPlayer
-                    onClicked: {
-                        if (root.player.canTogglePlaying) root.player.togglePlaying();
-                        else if (root.isPlaying) root.player.pause();
-                        else root.player.play();
+                Text {
+                    Layout.fillWidth: true
+                    text: root.playerIndex < 0 ? root.source
+                        : root.source + " (" + (root.playerIndex + 1) + "/" + root.players.length + ")"
+                    font.family: root.fontFam
+                    font.pixelSize: px(10)
+                    color: "#a0a0a0"
+                    elide: Text.ElideLeft
+                    horizontalAlignment: Text.AlignRight
+                }
+                Text {
+                    text: "\u{203a}"
+                    font.family: root.fontFam
+                    font.pixelSize: px(13)
+                    font.bold: true
+                    color: nextPlayerArea.containsMouse ? root.accent : "#a0a0a0"
+                    MouseArea {
+                        id: nextPlayerArea
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: root.cyclePlayer(1)
                     }
                 }
             }
+            Text {
+                Layout.fillWidth: true
+                visible: root.players.length <= 1
+                text: root.source
+                font.family: root.fontFam
+                font.pixelSize: px(10)
+                color: "#a0a0a0"
+                elide: Text.ElideLeft
+                horizontalAlignment: Text.AlignRight
+            }
+        }
+    }
 
-            Rectangle {
-                Layout.preferredWidth: px(34)
-                Layout.preferredHeight: px(34)
-                radius: px(17)
-                color: nextArea.containsMouse ? Qt.rgba(1, 1, 1, 0.12) : "transparent"
-                opacity: root.hasPlayer && root.player.canGoNext ? 1 : 0.3
+    // Rectangle.enabled does not propagate to MouseArea.
+    RowLayout {
+        id: controlsRow
+        anchors.right: parent.right
+        anchors.rightMargin: px(26)
+        anchors.verticalCenter: parent.verticalCenter
+        spacing: px(6)
+
+        Rectangle {
+            Layout.preferredWidth: px(34)
+            Layout.preferredHeight: px(34)
+            radius: px(17)
+            color: prevArea.containsMouse ? Qt.rgba(1, 1, 1, 0.12) : "transparent"
+            opacity: root.hasPlayer && root.player.canGoPrevious ? 1 : 0.3
+            Text {
+                anchors.centerIn: parent
+                text: "\u{f04ae}"
+                font.family: root.iconFam
+                font.pixelSize: px(17)
+                color: "#ffffff"
+            }
+            MouseArea {
+                id: prevArea
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                enabled: root.hasPlayer && root.player.canGoPrevious
+                onClicked: root.player.previous()
+            }
+        }
+
+        Rectangle {
+            Layout.preferredWidth: px(44)
+            Layout.preferredHeight: px(44)
+            radius: px(22)
+            color: playArea.containsMouse ? Qt.lighter(root.accent, 1.18) : root.accent
+            opacity: root.hasPlayer ? 1 : 0.4
+            Text {
+                anchors.centerIn: parent
+                text: root.isPlaying ? "\u{f04c}" : "\u{f04b}"
+                font.family: root.iconFam
+                font.pixelSize: px(21)
+                color: root.accentFg
+            }
+            MouseArea {
+                id: playArea
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                enabled: root.hasPlayer
+                onClicked: {
+                    if (root.player.canTogglePlaying) root.player.togglePlaying();
+                    else if (root.isPlaying) root.player.pause();
+                    else root.player.play();
+                }
+            }
+        }
+
+        Rectangle {
+            Layout.preferredWidth: px(34)
+            Layout.preferredHeight: px(34)
+            radius: px(17)
+            color: nextArea.containsMouse ? Qt.rgba(1, 1, 1, 0.12) : "transparent"
+            opacity: root.hasPlayer && root.player.canGoNext ? 1 : 0.3
+            Text {
+                anchors.centerIn: parent
+                text: "\u{f04ad}"
+                font.family: root.iconFam
+                font.pixelSize: px(17)
+                color: "#ffffff"
+            }
+            MouseArea {
+                id: nextArea
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
                 enabled: root.hasPlayer && root.player.canGoNext
-                Text {
-                    anchors.centerIn: parent
-                    text: "\u{f04ad}"
-                    font.family: root.iconFam
-                    font.pixelSize: px(17)
-                    color: "#ffffff"
-                }
-                MouseArea {
-                    id: nextArea
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    // Rectangle.enabled does not propagate to MouseArea:
-                    // repeat it here so clicks cannot hit a null player.
-                    enabled: root.hasPlayer && root.player.canGoNext
-                    onClicked: root.player.next()
-                }
+                onClicked: root.player.next()
             }
         }
     }

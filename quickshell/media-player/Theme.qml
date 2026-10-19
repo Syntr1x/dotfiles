@@ -1,5 +1,5 @@
-// Accent read live from quickshell/accent.conf.
-// Duplicates the bar Theme.qml: imports outside the running config's folder are rejected.
+// Accent read live from quickshell/accent.conf; local copy because imports
+// outside the running config's directory are rejected.
 import Quickshell
 import Quickshell.Io
 import QtQuick
@@ -22,7 +22,6 @@ QtObject {
         onFileChanged: reload()
     }
 
-    // accent.conf holds `accent=#rrggbb`; the second pattern also accepts a bare hex value.
     readonly property string accent: {
         const txt = theme.accentFile.text();
         const m = /accent\s*=\s*(#[0-9a-fA-F]{6})/.exec(txt) || /(#[0-9a-fA-F]{6})/.exec(txt);
