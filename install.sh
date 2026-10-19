@@ -5,7 +5,7 @@ install_Yay() {
 }
 
 install_pacman_packages() {
-  local REQUIRED_PKGS=("hyprland" "nano" "ghostty" "hyprpaper" "dolphin" "ark" "fastfetch" "btop" "networkmanager" "sddm" "pipewire" "pipewire-audio" "pipewire-alsa" "pipewire-pulse" "pipewire-libcamera" "wireplumber" "alsa-utils" "alsa-card-profiles" "sof-firmware" "rtkit" "quickshell" "flatpak" "libnotify" "kitty" "wget" "reflector" "dunst" "ttf-nerd-fonts-symbols" "ttf-firacode-nerd" "ttf-jetbrains-mono-nerd" "ttf-font-awesome" "python" "brightnessctl" "playerctl")
+  local REQUIRED_PKGS=("hyprland" "nano" "ghostty" "hyprpaper" "dolphin" "ark" "fastfetch" "btop" "networkmanager" "sddm" "pipewire" "pipewire-audio" "pipewire-alsa" "pipewire-pulse" "pipewire-libcamera" "wireplumber" "alsa-utils" "alsa-card-profiles" "sof-firmware" "rtkit" "quickshell" "flatpak" "libnotify" "kitty" "wget" "reflector" "dunst" "ttf-nerd-fonts-symbols" "ttf-firacode-nerd" "ttf-jetbrains-mono-nerd" "ttf-jetbrains-mono" "ttf-font-awesome" "inter-font" "redhat-fonts" "python" "brightnessctl" "playerctl")
   for pkg in "${REQUIRED_PKGS[@]}"; do pacman -Q "$pkg" &>/dev/null || sudo pacman -S --needed --noconfirm "$pkg"; done
 }
 
