@@ -33,12 +33,17 @@ ShellRoot {
         return l > 0.58 ? "#121214" : "white";
     }
 
-    // Per-output: DP-1 -> 0.75, eDP-1/unknown -> 1.0, env forces global.
-    // Follows win.screen, so unplug/replug picks the right size live.
+    // Per-output: only external screens on a laptop (internal eDP/LVDS/DSI
+    // panel present) shrink to 0.75; desktops and laptop panels stay at 1.0,
+    // env forces global. Follows win.screen, so unplug/replug picks the
+    // right size live.
     function scaleFor(screenName) {
         const v = parseFloat(Quickshell.env("QUICKSHELL_UI_SCALE") || "");
         if (!isNaN(v) && v > 0.4 && v < 2.0) return v;
-        if (screenName === "DP-1") return 0.75;
+        if (/^(eDP|LVDS|DSI)/i.test(String(screenName || ""))) return 1.0;
+        for (let i = 0; i < Quickshell.screens.length; ++i) {
+            if (/^(eDP|LVDS|DSI)/i.test(String(Quickshell.screens[i].name || ""))) return 0.75;
+        }
         return 1.0;
     }
     readonly property string activeScreenName: (win.screen && win.screen.name) || (Quickshell.screens.length > 0 ? Quickshell.screens[0].name : "")

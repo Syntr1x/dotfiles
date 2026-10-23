@@ -20,14 +20,18 @@ Scope {
     // property of the same name.
     property bool barVisible: true
 
-    // Per-output scale: DP-1 (32" 1080p ~70 DPI) -> 0.75, eDP-1 laptop -> 1.0.
+    // Per-output scale: only external screens on a laptop (internal
+    // eDP/LVDS/DSI panel present) shrink to 0.75; desktops stay at 1.0.
     // Env QUICKSHELL_UI_SCALE forces a global value. Variants rebuild on
     // plug/unplug so each PanelWindow picks up its own screen automatically.
     function scaleFor(screenName) {
         const v = parseFloat(Quickshell.env("QUICKSHELL_UI_SCALE") || "");
         if (!isNaN(v) && v > 0.4 && v < 2.0) return v;
         if (barScope.theme && barScope.theme.scaleFor !== undefined) return barScope.theme.scaleFor(screenName);
-        if (screenName === "DP-1") return 0.75;
+        if (/^(eDP|LVDS|DSI)/i.test(String(screenName || ""))) return 1.0;
+        for (let i = 0; i < Quickshell.screens.length; ++i) {
+            if (/^(eDP|LVDS|DSI)/i.test(String(Quickshell.screens[i].name || ""))) return 0.75;
+        }
         return 1.0;
     }
     function pxFor(screenName, v) { return Math.round(v * barScope.scaleFor(screenName)); }

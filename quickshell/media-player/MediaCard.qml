@@ -5,7 +5,7 @@ import Quickshell.Widgets
 
 Item {
     id: root
-    property real uiScale: 0.75
+    property real uiScale: 1.0
     function px(v) { return Math.round(v * uiScale); }
     width: px(410)
     height: px(116)

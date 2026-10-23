@@ -8,11 +8,15 @@ ShellRoot {
 
     Theme { id: theme }
 
-    // DP-1 -> 0.75; QUICKSHELL_UI_SCALE overrides.
+    // Scale down external screens only on laptops (internal eDP/LVDS/DSI
+    // panel present); desktops always 1.0. QUICKSHELL_UI_SCALE overrides.
     function scaleFor(screenName) {
         const v = parseFloat(Quickshell.env("QUICKSHELL_UI_SCALE") || "");
         if (!isNaN(v) && v > 0.4 && v < 2.0) return v;
-        if (screenName === "DP-1") return 0.75;
+        if (/^(eDP|LVDS|DSI)/i.test(String(screenName || ""))) return 1.0;
+        for (let i = 0; i < Quickshell.screens.length; ++i) {
+            if (/^(eDP|LVDS|DSI)/i.test(String(Quickshell.screens[i].name || ""))) return 0.75;
+        }
         return 1.0;
     }
 

@@ -48,7 +48,12 @@ QtObject {
     function scaleFor(screenName) {
         const v = parseFloat(Quickshell.env("QUICKSHELL_UI_SCALE") || "");
         if (!isNaN(v) && v > 0.4 && v < 2.0) return v;
-        if (screenName === "DP-1") return 0.75;
+        // Scale down only external screens, and only when the machine itself
+        // is a laptop (has an internal eDP/LVDS/DSI panel). Desktops: 1.0.
+        if (/^(eDP|LVDS|DSI)/i.test(String(screenName || ""))) return 1.0;
+        for (let i = 0; i < Quickshell.screens.length; ++i) {
+            if (/^(eDP|LVDS|DSI)/i.test(String(Quickshell.screens[i].name || ""))) return 0.75;
+        }
         return 1.0;
     }
     readonly property real uiScale: scaleFor("")
